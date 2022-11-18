@@ -1,5 +1,5 @@
+#include "i2s.h"
 #include <zephyr.h>
-#include <nrfx_i2s.h>
 
 nrfx_i2s_buffers_t nrfx_i2s_buffers_1 = {
     .p_rx_buffer = NULL,

@@ -9,6 +9,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <rust_lib.h>
 
+#include "codec.h"
 #include "i2s.h"
 
 /* 1000 msec = 1 sec */
@@ -28,6 +29,7 @@ void main(void)
 	int test = rust_test_fn();
 	printk("rust_test_fn returned %d\n", test);
 
+	init_codec();
 	i2s_start();
 
 	int ret;
