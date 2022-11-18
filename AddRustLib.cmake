@@ -7,11 +7,10 @@ function(
   include_path
 )
 
-# TODO: replace - with _
-set(LIB_NAME ${crate_name})
+string(REPLACE "-" "_" SANITIZED_LIB_NAME ${crate_name})
 
-# TODO: replace - with _
-set(LIB_FILENAME lib${crate_name}.a)
+set(LIB_NAME ${SANITIZED_LIB_NAME})
+set(LIB_FILENAME lib${SANITIZED_LIB_NAME}.a)
 
 # Select a cargo build profile, if not already set
 if (NOT DEFINED CARGO_PROFILE)

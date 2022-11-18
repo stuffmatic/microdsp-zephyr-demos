@@ -12,7 +12,7 @@ include(AddRustLib.cmake)
 
 # ${CMAKE_CURRENT_SOURCE_DIR} is the directory containing CMakeLists.txt
 add_rust_lib(
-  rust_lib # TODO: pass actual name with -
+  rust-lib # TODO: pass actual name with -
   ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib
   ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib/include
 )
