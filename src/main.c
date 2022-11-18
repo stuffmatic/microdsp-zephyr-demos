@@ -23,6 +23,7 @@ static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
 void main(void)
 {
 	int test = rust_test_fn();
+	printk("rust_test_fn returned %d\n", test);
 
 	int ret;
 
