@@ -6,24 +6,12 @@ project(rust_audio_demo)
 
 target_sources(app PRIVATE src/main.c)
 
-# Rust lib
-# https://discourse.cmake.org/t/problems-when-porting-a-library-target-from-externalproject-add/3522
-# TODO:
-# * arch selection
-# * debug/release
-# * nicer packaging: add_rust_lib(crate_root, include_path)
+# Build rust library
+include(AddRustLib.cmake)
 
-add_library(rust_lib INTERFACE librust_lib.a)
-target_include_directories(rust_lib INTERFACE /Users/perarne/code/zephyr/zerphyr-rust-audio-demo/rust_lib/include)
-target_link_libraries(rust_lib INTERFACE /Users/perarne/code/zephyr/zerphyr-rust-audio-demo/rust_lib/target/thumbv7em-none-eabi/debug/librust_lib.a)
-target_link_libraries(app PRIVATE rust_lib)
-
-add_custom_command(
-  OUTPUT librust_lib.a
-  COMMAND cargo build --target thumbv7em-none-eabi
-  WORKING_DIRECTORY ../rust_lib
-  COMMENT "Building rust_lib"
-  VERBATIM
+# ${CMAKE_CURRENT_SOURCE_DIR} is the directory containing CMakeLists.txt
+add_rust_lib(
+  rust_lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib/include
 )
-
-
