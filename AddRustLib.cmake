@@ -1,3 +1,5 @@
+include(ExternalProject)
+
 function(
   add_rust_lib
   crate_name
@@ -49,19 +51,22 @@ endif()
 
 set(LIB_PATH ${crate_root}/target/${CARGO_TARGET}/${CARGO_PROFILE}/${LIB_FILENAME})
 
-add_custom_command(
-  OUTPUT ${LIB_FILENAME}
-  BYPRODUCTS ${LIB_FILENAME}
-  COMMAND cargo build --target ${CARGO_TARGET} ${CARGO_ARGS}
-  WORKING_DIRECTORY ${crate_root}
+# The following is adapted from the external_lib zephyr example
+ExternalProject_Add(
+  ext_proj
+  BINARY_DIR ${crate_root}
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND cargo build --target ${CARGO_TARGET} ${CARGO_ARGS}
+  INSTALL_COMMAND ""
+  SOURCE_DIR ${crate_root}
+  BUILD_BYPRODUCTS ${LIB_PATH}
   COMMENT "Building rust library '${crate_name}' target='${CARGO_TARGET}' profile='${CARGO_PROFILE}' args='${CARGO_ARGS}'"
-  VERBATIM
 )
+add_library(${LIB_FILENAME} STATIC IMPORTED GLOBAL)
+add_dependencies(${LIB_FILENAME} ext_proj)
+set_target_properties(${LIB_FILENAME} PROPERTIES IMPORTED_LOCATION ${LIB_PATH})
+set_target_properties(${LIB_FILENAME} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${include_path})
 
-add_library(${LIB_NAME} INTERFACE ${LIB_FILENAME})
-target_include_directories(${LIB_NAME} INTERFACE ${include_path})
-target_link_libraries(${LIB_NAME} INTERFACE ${LIB_PATH})
-target_link_libraries(app PRIVATE ${LIB_NAME})
-
+target_link_libraries(app PUBLIC ${LIB_FILENAME})
 
 endfunction()
