@@ -1,5 +1,20 @@
 include(ExternalProject)
 
+# A helper function for adding a dependency on a
+# rust crate that is compiled to a static library and
+# linked into the app. By deafult, the create is compiled
+# in release mode unless CONFIG_DEBUG_OPTIMIZATIONS is set.
+# To override this behavior, set CARGO_PROFILE to 'release'
+# or 'debug' before calling the function.
+#
+# Parameters:
+#
+# crate_name   - The name of the crate as specified in Cargo.toml
+# crate_root   - Absolute path to the crate's root folder
+# include_path - Absolute path to a folder containing the C wrapper header(s).
+#                This path gets added to the header search paths. If for example
+#                header.h is placed under include_path, it can be included
+#                from the app code like this: #include <header.h>.
 function(
   add_rust_lib
   crate_name
@@ -7,15 +22,16 @@ function(
   include_path
 )
 
+# - gets replaced with _ in build artefacts created by cargo
 string(REPLACE "-" "_" SANITIZED_LIB_NAME ${crate_name})
 
-set(LIB_NAME ${SANITIZED_LIB_NAME})
+# cargo adds the prefix lib to static libraries
 set(LIB_FILENAME lib${SANITIZED_LIB_NAME}.a)
 
 # Select a cargo build profile, if not already set
 if (NOT DEFINED CARGO_PROFILE)
   set(CARGO_PROFILE release)
-  if (DEFINED CONFIG_NO_OPTIMIZATIONS)
+  if (DEFINED CONFIG_DEBUG_OPTIMIZATIONS)
     set(CARGO_PROFILE debug)
   endif()
 endif()
@@ -45,6 +61,7 @@ elseif(DEFINED CONFIG_CPU_CORTEX_M4 OR DEFINED CONFIG_CPU_CORTEX_M7)
   set(CARGO_TARGET thumbv7em-none-eabi)
   endif()
 else()
+  # TODO: Add more CPU types
   message(FATAL_ERROR "Failed to set a cargo build target for CPU type")
 endif()
 

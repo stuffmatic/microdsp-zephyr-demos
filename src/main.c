@@ -4,9 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+
 #include <zephyr/zephyr.h>
 #include <zephyr/drivers/gpio.h>
 #include <rust_lib.h>
+
+#include "i2s.h"
 
 /* 1000 msec = 1 sec */
 #define SLEEP_TIME_MS   1000
@@ -24,6 +27,8 @@ void main(void)
 {
 	int test = rust_test_fn();
 	printk("rust_test_fn returned %d\n", test);
+
+	i2s_start();
 
 	int ret;
 

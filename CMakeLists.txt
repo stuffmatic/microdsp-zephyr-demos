@@ -4,15 +4,14 @@ cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(rust_audio_demo)
 
-target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE src/main.c src/i2s.c src/codec.c)
 
 # Build rust library
 include(AddRustLib.cmake)
-
-
 # ${CMAKE_CURRENT_SOURCE_DIR} is the directory containing CMakeLists.txt
+# set(CARGO_PROFILE "debug")
 add_rust_lib(
-  rust-lib # TODO: pass actual name with -
+  rust-lib
   ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib
   ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib/include
 )
