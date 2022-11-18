@@ -6,6 +6,7 @@
 
 #include <zephyr/zephyr.h>
 #include <zephyr/drivers/gpio.h>
+#include <rust_lib.h>
 
 /* 1000 msec = 1 sec */
 #define SLEEP_TIME_MS   1000
@@ -21,6 +22,8 @@ static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
 
 void main(void)
 {
+	int test = rust_test_fn();
+
 	int ret;
 
 	if (!device_is_ready(led.port)) {
