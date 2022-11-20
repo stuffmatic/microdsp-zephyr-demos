@@ -6,12 +6,12 @@ project(rust_audio_demo)
 
 target_sources(app PRIVATE src/main.c src/i2s.c src/codec.c)
 
-# Build rust library
+# Import the add_rust_lib function
 include(AddRustLib.cmake)
-# ${CMAKE_CURRENT_SOURCE_DIR} is the directory containing CMakeLists.txt
-# set(CARGO_PROFILE "debug")
+# Add rust-lib crate dependency.
+# ${CMAKE_CURRENT_SOURCE_DIR} is the directory containing CMakeLists.txt.
 add_rust_lib(
-  rust-lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib
-  ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib/include
+  rust-lib # Crate name as specified in Cargo.toml
+  ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib # Crate root dir
+  ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib/include # C header dir
 )
