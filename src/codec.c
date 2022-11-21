@@ -2,7 +2,7 @@
 #include <zephyr/drivers/i2c.h>
 
 #define WM8758B_ADDRESS 0b11010
-#define WM8904_ADDRESS 0b110100
+#define WM8904_ADDRESS  0b110100
 #define I2C_NODE DT_NODELABEL(i2c0)
 static const struct device* i2c_dev = DEVICE_DT_GET(I2C_NODE);
 
@@ -22,6 +22,7 @@ int write_reg(uint8_t device_addr, uint16_t reg_addr, uint16_t data) {
       (reg_and_address >> 0) & 0xff  // lsb
   };
   int write_rc = i2c_write(i2c_dev, payload, 2, device_addr);
+  printk("write_reg result %d\n", write_rc);
   return write_rc;
 }
 
@@ -105,6 +106,9 @@ void init_wm8758b_codec() {
     // LOUT1VOL/ROUT1VOL
     write_reg(WM8758B_ADDRESS, 52, (1 << 8) | 0x39);
     write_reg(WM8758B_ADDRESS, 53, (1 << 8) | 0x39);
+
+    // mic bypass path (for debugging mic input)
+    // write_reg(WM8758B_ADDRESS, 43, (1 << 8) | (1 << 7));
   } else {
     // TODO: report error
   }
