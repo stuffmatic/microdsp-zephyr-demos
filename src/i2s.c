@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////
 // Audio buffers
 ////////////////////////////////////////////////////////////
-#define AUDIO_BUFFER_N_FRAMES 256
+#define AUDIO_BUFFER_N_FRAMES 7000 // 256
 #define AUDIO_BUFFER_N_CHANNELS 2
 #define BYTES_PER_SAMPLE 2
 #define AUDIO_BUFFER_N_SAMPLES (AUDIO_BUFFER_N_FRAMES * AUDIO_BUFFER_N_CHANNELS)
@@ -53,13 +53,13 @@ K_THREAD_STACK_DEFINE(processing_thread_stack_area, PROCESSING_THREAD_STACK_SIZE
 struct k_thread processing_thread_data;
 
 static float oscillator_phase = -1;
-static float oscillator_dphase = 2.0 * 600.0 / 44100.0;
+static float oscillator_dphase = 2 * 600.0 / 44100.0; // 2.0 * 4.0 / 256.0; // 600.0 / 44100.0;
 static void processing_callback(float *tx, const float *rx) {
     for (int i = 0; i < AUDIO_BUFFER_N_FRAMES; i++) {
         const float a = oscillator_phase < 0 ? 1 : -1;
-        const float gain = 0.1;
+        const float gain = 0.5;
         tx[2 * i] = gain * (oscillator_phase + a * oscillator_phase * oscillator_phase);
-        oscillator_phase += oscillator_dphase;
+        oscillator_phase += (processing_buffers_1 ? 1 : 2) * oscillator_dphase;
         if (oscillator_phase > 1) {
             oscillator_phase -= 2;
         }
@@ -81,9 +81,16 @@ static void process_buffers(int16_t* tx, const int16_t* rx) {
     }
 }
 
+uint32_t processing_sem_give_time = 0;
+
 static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
     while (true) {
         if (k_sem_take(&processing_thread_semaphore, K_FOREVER) == 0) {
+            uint32_t processing_sem_take_time = k_cycle_get_32();
+            uint32_t cycles_spent = processing_sem_take_time - processing_sem_give_time;
+            uint32_t ns_spent = k_cyc_to_ns_ceil32(cycles_spent);
+            printk("processing thread start took %d ns\n", ns_spent);
+
             if (!atomic_test_bit(&processing_in_progress, 0)) {
                 printk("processing_in_progress is not set");
                 __ASSERT(atomic_test_bit(&processing_in_progress, 0), "processing_in_progress is not set");
@@ -97,7 +104,7 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
             process_buffers(tx, rx);
 
             nrfx_i2s_buffers_t* buffers_to_set = processing_buffers_1 ? &nrfx_i2s_buffers_2 : &nrfx_i2s_buffers_1;
-            nrfx_err_t result = nrfx_i2s_next_buffers_set(buffers_to_set);
+            nrfx_err_t result = nrfx_i2s_next_buffers_set(buffers_to_process);
             if (result != NRFX_SUCCESS) {
                 printk("nrfx_i2s_next_buffers_set failed with %d\n", result);
                 __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_next_buffers_set failed with result %d", result);
@@ -133,7 +140,8 @@ nrfx_i2s_config_t nrfx_i2s_cfg = {
     .ratio = NRF_I2S_RATIO_48X,
 #else
     .sample_width = NRF_I2S_SWIDTH_16BIT,
-    .mck_setup = 0x50000000UL, // NRF_I2S_MCK_32MDIV3,
+    // TODO: using lowest supported value for testing. out of spec value causes weirdness.
+    .mck_setup = NRF_I2S_MCK_32MDIV8, // 0x50000000UL, // NRF_I2S_MCK_32MDIV3,
     .ratio = NRF_I2S_RATIO_256X,
 #endif
 };
@@ -149,25 +157,47 @@ ISR_DIRECT_DECLARE(i2s_isr_handler)
 void nrfx_i2s_data_handler(nrfx_i2s_buffers_t const *p_released, uint32_t status)
 {
     if (status == NRFX_I2S_STATUS_NEXT_BUFFERS_NEEDED) {
-        nrfx_i2s_buffers_t* buffers_to_process = processing_buffers_1 ? &nrfx_i2s_buffers_1 : &nrfx_i2s_buffers_2;
-        // TODO: not always int16_t
-        int16_t *tx = (int16_t *)buffers_to_process->p_tx_buffer;
-        int16_t *rx = (int16_t *)buffers_to_process->p_rx_buffer;
-        process_buffers(tx, rx);
+        if (false) {
+            if (p_released == NULL) {
+                printk("p_released is NULL\n");
+            }
 
-        // nrfx_i2s_buffers_t* buffers_to_set = processing_buffers_1 ? &nrfx_i2s_buffers_2 : &nrfx_i2s_buffers_1;
-        nrfx_err_t result = nrfx_i2s_next_buffers_set(buffers_to_process);
-        if (result != NRFX_SUCCESS) {
-            printk("nrfx_i2s_next_buffers_set failed with %d\n", result);
-            __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_next_buffers_set failed with result %d", result);
-        }
-        processing_buffers_1 = !processing_buffers_1;
-        /* if (atomic_test_bit(&processing_in_progress, 0) == false) {
-            atomic_set_bit(&processing_in_progress, 0);
-            k_sem_give(&processing_thread_semaphore);
+            nrfx_i2s_buffers_t* buffers_to_process = processing_buffers_1 ? &nrfx_i2s_buffers_1 : &nrfx_i2s_buffers_2;
+            // TODO: not always int16_t
+            int16_t *tx = (int16_t *)buffers_to_process->p_tx_buffer;
+            int16_t *rx = (int16_t *)buffers_to_process->p_rx_buffer;
+            process_buffers(tx, rx);
+
+            // nrfx_i2s_buffers_t* buffers_to_set = processing_buffers_1 ? &nrfx_i2s_buffers_2 : &nrfx_i2s_buffers_1;
+            nrfx_err_t result = nrfx_i2s_next_buffers_set(buffers_to_process);
+            if (result != NRFX_SUCCESS) {
+                printk("nrfx_i2s_next_buffers_set failed with %d\n", result);
+                __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_next_buffers_set failed with result %d", result);
+            }
+            if (false) {
+                printk("rx/tx 1 %d %d\n", nrfx_i2s_buffers_1.p_rx_buffer, nrfx_i2s_buffers_1.p_tx_buffer);
+                printk("rx/tx 2 %d %d\n", nrfx_i2s_buffers_2.p_rx_buffer, nrfx_i2s_buffers_2.p_tx_buffer);
+                printk("rx/tx pr %d %d\n", buffers_to_process->p_rx_buffer, buffers_to_process->p_tx_buffer);
+                if (p_released) {
+                    printk("rx/tx rel == rx/tx pr %d\n",
+                        p_released->p_rx_buffer == buffers_to_process->p_rx_buffer &&
+                        p_released->p_tx_buffer == buffers_to_process->p_tx_buffer);
+                } else {
+                    printk("p_released is null\n");
+                }
+                printk("\n");
+            }
+
+            processing_buffers_1 = !processing_buffers_1;
         } else {
-            // Missed deadline.
-        } */
+            if (atomic_test_bit(&processing_in_progress, 0) == false) {
+                atomic_set_bit(&processing_in_progress, 0);
+                processing_sem_give_time = k_cycle_get_32();
+                k_sem_give(&processing_thread_semaphore);
+            } else {
+                // Missed deadline.
+            }
+        }
     }
     else if (status == NRFX_I2S_STATUS_TRANSFER_STOPPED) {
         printk("status == NRFX_I2S_STATUS_TRANSFER_STOPPED");
@@ -189,7 +219,7 @@ nrfx_err_t i2s_start()
         PROCESSING_THREAD_PRIORITY, 0, K_NO_WAIT
     );
 
-
+    IRQ_DIRECT_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_I2S), 0, i2s_isr_handler, 0);
 
     // Init and start I2S
     nrfx_err_t result = nrfx_i2s_init(&nrfx_i2s_cfg, &nrfx_i2s_data_handler);
@@ -198,17 +228,17 @@ nrfx_err_t i2s_start()
         __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_init failed with result %d", result);
     }
 
-    if ((((uint32_t)nrfx_i2s_buffers_1.p_rx_buffer) & 0x3u) != 0u) {
-        printk("rx 1 not aligned");
+    if ((((uint32_t)nrfx_i2s_buffers_1.p_rx_buffer) & 0x3u) == 0u) {
+        printk("rx 1 is aligned\n");
     }
-    if ((((uint32_t)nrfx_i2s_buffers_1.p_tx_buffer) & 0x3u) != 0u) {
-        printk("tx 1 not aligned");
+    if ((((uint32_t)nrfx_i2s_buffers_1.p_tx_buffer) & 0x3u) == 0u) {
+        printk("tx 1 is aligned\n");
     }
-    if ((((uint32_t)nrfx_i2s_buffers_2.p_rx_buffer) & 0x3u) != 0u) {
-        printk("rx 2 not aligned");
+    if ((((uint32_t)nrfx_i2s_buffers_2.p_rx_buffer) & 0x3u) == 0u) {
+        printk("rx 2 is aligned\n");
     }
-    if ((((uint32_t)nrfx_i2s_buffers_2.p_tx_buffer) & 0x3u) != 0u) {
-        printk("tx 2 not aligned");
+    if ((((uint32_t)nrfx_i2s_buffers_2.p_tx_buffer) & 0x3u) == 0u) {
+        printk("tx 2 is aligned\n");
     }
 
     result = nrfx_i2s_start(&nrfx_i2s_buffers_1, AUDIO_BUFFER_WORD_SIZE, 0);
@@ -216,9 +246,6 @@ nrfx_err_t i2s_start()
         printk("nrfx_i2s_start failed with result %d", result);
         __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_start failed with result %d", result);
     }
-
-    IRQ_DIRECT_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_I2S), 0, i2s_isr_handler, 0);
-
 
     return NRFX_SUCCESS; // TODO: return proper result
 }
