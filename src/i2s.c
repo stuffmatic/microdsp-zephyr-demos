@@ -19,10 +19,11 @@ static float scratch_buffer_in[AUDIO_BUFFER_N_SAMPLES];
 // Use two pairs of rx/tx buffers for double buffering,
 // i.e process/render one pair of buffers while the other is
 // being transfered.
-static int16_t rx_1[AUDIO_BUFFER_N_SAMPLES];
-static int16_t tx_1[AUDIO_BUFFER_N_SAMPLES];
-static int16_t rx_2[AUDIO_BUFFER_N_SAMPLES];
-static int16_t tx_2[AUDIO_BUFFER_N_SAMPLES];
+// __attribute__((aligned(4)))
+static int16_t __attribute__((aligned(4))) rx_1[AUDIO_BUFFER_N_SAMPLES];
+static int16_t __attribute__((aligned(4))) tx_1[AUDIO_BUFFER_N_SAMPLES];
+static int16_t __attribute__((aligned(4))) rx_2[AUDIO_BUFFER_N_SAMPLES];
+static int16_t __attribute__((aligned(4))) tx_2[AUDIO_BUFFER_N_SAMPLES];
 nrfx_i2s_buffers_t nrfx_i2s_buffers_1 = {
     .p_rx_buffer = (uint32_t *)(&rx_1), .p_tx_buffer = (uint32_t *)(&tx_1)
 };
@@ -51,9 +52,32 @@ atomic_t processing_in_progress = ATOMIC_INIT(0x00);
 K_THREAD_STACK_DEFINE(processing_thread_stack_area, PROCESSING_THREAD_STACK_SIZE);
 struct k_thread processing_thread_data;
 
+static float oscillator_phase = -1;
+static float oscillator_dphase = 2.0 * 600.0 / 44100.0;
 static void processing_callback(float *tx, const float *rx) {
+    for (int i = 0; i < AUDIO_BUFFER_N_FRAMES; i++) {
+        const float a = oscillator_phase < 0 ? 1 : -1;
+        const float gain = 0.1;
+        tx[2 * i] = gain * (oscillator_phase + a * oscillator_phase * oscillator_phase);
+        oscillator_phase += oscillator_dphase;
+        if (oscillator_phase > 1) {
+            oscillator_phase -= 2;
+        }
+    }
+}
+
+static void process_buffers(int16_t* tx, const int16_t* rx) {
+    // Convert incoming audio from PCM
     for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
-        tx[i] = 0.001 * i;
+        scratch_buffer_in[i] = rx[i] / 32767.0;
+    }
+
+    memset(scratch_buffer_out, 0, AUDIO_BUFFER_N_SAMPLES * sizeof(float));
+    processing_callback(scratch_buffer_out, scratch_buffer_in);
+
+    // Convert outgoing audio to PCM
+    for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
+        tx[i] = scratch_buffer_out[i] * 32767.0; // TODO: saturated?
     }
 }
 
@@ -65,35 +89,32 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
                 __ASSERT(atomic_test_bit(&processing_in_progress, 0), "processing_in_progress is not set");
             }
 
-            nrfx_i2s_buffers_t* current_buffers = processing_buffers_1 ? &nrfx_i2s_buffers_1 : &nrfx_i2s_buffers_2;
+            nrfx_i2s_buffers_t* buffers_to_process = processing_buffers_1 ? &nrfx_i2s_buffers_1 : &nrfx_i2s_buffers_2;
             // TODO: not always int16_t
-            int16_t *tx = (int16_t *)current_buffers->p_tx_buffer;
-            int16_t *rx = (int16_t *)current_buffers->p_rx_buffer;
+            int16_t *tx = (int16_t *)buffers_to_process->p_tx_buffer;
+            int16_t *rx = (int16_t *)buffers_to_process->p_rx_buffer;
 
-            // Convert incoming audio from PCM
-            for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
-                scratch_buffer_in[i] = rx[i] / 32767.0;
+            process_buffers(tx, rx);
+
+            nrfx_i2s_buffers_t* buffers_to_set = processing_buffers_1 ? &nrfx_i2s_buffers_2 : &nrfx_i2s_buffers_1;
+            nrfx_err_t result = nrfx_i2s_next_buffers_set(buffers_to_set);
+            if (result != NRFX_SUCCESS) {
+                printk("nrfx_i2s_next_buffers_set failed with %d\n", result);
+                __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_next_buffers_set failed with result %d", result);
             }
 
-            memset(scratch_buffer_out, 0, AUDIO_BUFFER_N_SAMPLES * sizeof(float));
-            processing_callback(scratch_buffer_out, scratch_buffer_in);
+            processing_buffers_1 = !processing_buffers_1;
 
-            // Convert outgoing audio to PCM
-            for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
-                tx[i] = scratch_buffer_out[i] * 32767.0; // TODO: saturated?
-            }
-
-            // Signal that the current buffer pair is ready for transfer
             atomic_clear_bit(&processing_in_progress, 0);
         }
     }
 }
 
-const uint8_t lrck_pin = 11; // 29; // P0.29 7 aka word select
-const uint8_t sdout_pin = 7; // 30; // P0.30 25
-const uint8_t sck_pin = 23;  // 31; // aka bitcklock P0.31 26
-const uint8_t mck_pin = 6;   // 27; // NRFX_I2S_PIN_NOT_USED;
-const uint8_t sdin_pin = 25; // NRFX_I2S_PIN_NOT_USED; // 6; // NRFX_I2S_PIN_NOT_USED;
+const uint8_t lrck_pin = 29; // 29; // P0.29 7 aka word select
+const uint8_t sdout_pin = 30; // 30; // P0.30 25
+const uint8_t sck_pin = 4;  // 31; // aka bitcklock P0.31 26
+const uint8_t mck_pin = 31;   // 27; // NRFX_I2S_PIN_NOT_USED;
+const uint8_t sdin_pin = 28; // NRFX_I2S_PIN_NOT_USED; // 6; // NRFX_I2S_PIN_NOT_USED;
 
 nrfx_i2s_config_t nrfx_i2s_cfg = {
     .sck_pin = sck_pin,
@@ -128,45 +149,25 @@ ISR_DIRECT_DECLARE(i2s_isr_handler)
 void nrfx_i2s_data_handler(nrfx_i2s_buffers_t const *p_released, uint32_t status)
 {
     if (status == NRFX_I2S_STATUS_NEXT_BUFFERS_NEEDED) {
-        if (atomic_test_bit(&processing_in_progress, 0) == false) {
-            // The current buffer pair is not being used for processing/rendering
-            // and is thus ready for transfer. Swap pairs.
-            processing_buffers_1 = !processing_buffers_1;
-            // Initiate processing/rendering of the new current pair, which will
-            // happen while the other pair is transfered.
+        nrfx_i2s_buffers_t* buffers_to_process = processing_buffers_1 ? &nrfx_i2s_buffers_1 : &nrfx_i2s_buffers_2;
+        // TODO: not always int16_t
+        int16_t *tx = (int16_t *)buffers_to_process->p_tx_buffer;
+        int16_t *rx = (int16_t *)buffers_to_process->p_rx_buffer;
+        process_buffers(tx, rx);
+
+        // nrfx_i2s_buffers_t* buffers_to_set = processing_buffers_1 ? &nrfx_i2s_buffers_2 : &nrfx_i2s_buffers_1;
+        nrfx_err_t result = nrfx_i2s_next_buffers_set(buffers_to_process);
+        if (result != NRFX_SUCCESS) {
+            printk("nrfx_i2s_next_buffers_set failed with %d\n", result);
+            __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_next_buffers_set failed with result %d", result);
+        }
+        processing_buffers_1 = !processing_buffers_1;
+        /* if (atomic_test_bit(&processing_in_progress, 0) == false) {
             atomic_set_bit(&processing_in_progress, 0);
             k_sem_give(&processing_thread_semaphore);
-
-            /* if (p_released != NULL && p_released->p_rx_buffer != NULL && p_released->p_tx_buffer != NULL) {
-                static int wtf = 0;
-                if (wtf < 3) {
-                    nrfx_i2s_buffers_t* buffers_to_process = processing_buffers_1 ? &nrfx_i2s_buffers_1 : &nrfx_i2s_buffers_2;
-                    nrfx_i2s_buffers_t* buffers_to_set = processing_buffers_1 ? &nrfx_i2s_buffers_2 : &nrfx_i2s_buffers_1;
-                    if (buffers_to_process->p_rx_buffer == p_released->p_rx_buffer && buffers_to_process->p_tx_buffer == p_released->p_tx_buffer) {
-                        printk("Yeah!\n");
-                    } if (buffers_to_set->p_rx_buffer == p_released->p_rx_buffer && buffers_to_process->p_tx_buffer == p_released->p_tx_buffer) {
-                        printk("No set!\n");
-                    } else {
-                        printk("Boo!!\n");
-                    }
-                    wtf++;
-                }
-            } */
-
-            // Transfer the buffer pair not currently being processed.
-            // TODO: only do this after a buffer swap?
-            nrfx_i2s_buffers_t* buffers_to_set = processing_buffers_1 ? &nrfx_i2s_buffers_2 : &nrfx_i2s_buffers_1;
-            nrfx_err_t result = nrfx_i2s_next_buffers_set(buffers_to_set);
-            if (result != NRFX_SUCCESS) {
-                printk("nrfx_i2s_next_buffers_set failed with %d\n", result);
-                __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_next_buffers_set failed with result %d", result);
-            }
         } else {
-            // Missed deadline. Processing should not still be in progress
-            // when new buffers are needed. A missed deadline is equivalent to
-            // a missed buffer pair swap, resulting in the same buffer pair
-            // being transfered two or more times in a row.
-        }
+            // Missed deadline.
+        } */
     }
     else if (status == NRFX_I2S_STATUS_TRANSFER_STOPPED) {
         printk("status == NRFX_I2S_STATUS_TRANSFER_STOPPED");
@@ -188,19 +189,36 @@ nrfx_err_t i2s_start()
         PROCESSING_THREAD_PRIORITY, 0, K_NO_WAIT
     );
 
+
+
     // Init and start I2S
-    // IRQ_DIRECT_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_I2S), 0, i2s_isr_handler, 0);
-    IRQ_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_I2S), 0, i2s_isr_handler, 0, 0);
     nrfx_err_t result = nrfx_i2s_init(&nrfx_i2s_cfg, &nrfx_i2s_data_handler);
     if (result != NRFX_SUCCESS) {
         printk("nrfx_i2s_init failed with result %d", result);
         __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_init failed with result %d", result);
     }
+
+    if ((((uint32_t)nrfx_i2s_buffers_1.p_rx_buffer) & 0x3u) != 0u) {
+        printk("rx 1 not aligned");
+    }
+    if ((((uint32_t)nrfx_i2s_buffers_1.p_tx_buffer) & 0x3u) != 0u) {
+        printk("tx 1 not aligned");
+    }
+    if ((((uint32_t)nrfx_i2s_buffers_2.p_rx_buffer) & 0x3u) != 0u) {
+        printk("rx 2 not aligned");
+    }
+    if ((((uint32_t)nrfx_i2s_buffers_2.p_tx_buffer) & 0x3u) != 0u) {
+        printk("tx 2 not aligned");
+    }
+
     result = nrfx_i2s_start(&nrfx_i2s_buffers_1, AUDIO_BUFFER_WORD_SIZE, 0);
     if (result != NRFX_SUCCESS) {
         printk("nrfx_i2s_start failed with result %d", result);
         __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_start failed with result %d", result);
     }
+
+    IRQ_DIRECT_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_I2S), 0, i2s_isr_handler, 0);
+
 
     return NRFX_SUCCESS; // TODO: return proper result
 }

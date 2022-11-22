@@ -75,8 +75,8 @@ void init_wm8758b_codec() {
     write_reg(WM8758B_ADDRESS, 39, 0x0);
 
     // Set l/r dac volume
-    write_reg(WM8758B_ADDRESS, 11, 0x1ff);
-    write_reg(WM8758B_ADDRESS, 12, 0x1ff);
+    // write_reg(WM8758B_ADDRESS, 11, 0x1ff);
+    // write_reg(WM8758B_ADDRESS, 12, 0x1ff);
 
     // ALC
     // write_reg(i2c_num, 32, 0x0);
