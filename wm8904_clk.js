@@ -47,6 +47,10 @@ console.log({
   fOut
 })
 
+if (sysclk < 3_000_000) {
+  console.error("❗️ Invalid sysclk")
+}
+
 if (fVco < 90_000_000 || fVco > 100_000_000) {
   console.error("❗️ Invalid fVco")
 }

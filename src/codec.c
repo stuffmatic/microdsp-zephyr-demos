@@ -115,5 +115,7 @@ void init_wm8758b_codec() {
 }
 
 void init_wm8904_codec() {
-
+    // Note that, if it cannot be assured that MCLK is present when accessing
+    // the register map, then it is required to set CLK_SYS_ENA = 0 to
+    // ensure correct operation.
 }
