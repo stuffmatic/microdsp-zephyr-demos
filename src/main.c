@@ -26,7 +26,9 @@ static void processing_cb(void* data, uint32_t frame_count, uint32_t channel_cou
         const float a = osc_state->phase < 0 ? 1 : -1;
         const float gain = 0.5;
 				float phase = osc_state->phase;
-        tx[channel_count * i] = gain * (phase + a * phase * phase);
+				float value = gain * (phase + a * phase * phase);
+        tx[channel_count * i] = value;
+				tx[channel_count * i + 1] = value;
         phase += osc_state->dphase;
         if (phase > 1) {
             phase -= 2;
@@ -57,7 +59,7 @@ void main(void)
 	int test = rust_test_fn();
 	printk("rust_test_fn returned %d\n", test);
 
-	init_wm8758b_codec();
+	init_wm8904_codec();
 
 	audio_processing_options_t processing_options = {
 		.dropout_cb = dropout_cb,

@@ -114,7 +114,7 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
 const uint8_t lrck_pin = 29; // 29; // P0.29 7 aka word select
 const uint8_t sdout_pin = 30; // 30; // P0.30 25
 const uint8_t sck_pin = 4;  // 31; // aka bitcklock P0.31 26
-const uint8_t mck_pin = 31;   // 27; // NRFX_I2S_PIN_NOT_USED;
+const uint8_t mck_pin = NRFX_I2S_PIN_NOT_USED; // 31;   // 27; // NRFX_I2S_PIN_NOT_USED;
 const uint8_t sdin_pin = 28; // NRFX_I2S_PIN_NOT_USED; // 6; // NRFX_I2S_PIN_NOT_USED;
 
 nrfx_i2s_config_t nrfx_i2s_cfg = {
@@ -134,9 +134,8 @@ nrfx_i2s_config_t nrfx_i2s_cfg = {
     .ratio = NRF_I2S_RATIO_48X,
 #else
     .sample_width = NRF_I2S_SWIDTH_16BIT,
-    // TODO: using lowest supported value for testing. out of spec value causes weirdness.
-    .mck_setup = NRF_I2S_MCK_32MDIV8, // 0x50000000UL, // NRF_I2S_MCK_32MDIV3,
-    .ratio = NRF_I2S_RATIO_256X,
+    .mck_setup = NRF_I2S_MCK_32MDIV8,
+    .ratio = NRF_I2S_RATIO_96X,
 #endif
 };
 
@@ -168,7 +167,7 @@ void nrfx_i2s_data_handler(nrfx_i2s_buffers_t const *p_released, uint32_t status
 
 nrfx_err_t i2s_start(audio_processing_options_t* processing_options)
 {
-    // Start a dedicated, high priority thread for audio processing/rendering.
+    // Start a dedicated, high priority thread for audio processing.
     k_tid_t processing_thread_tid = k_thread_create(
         &processing_thread_data,
         processing_thread_stack_area,

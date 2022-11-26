@@ -1,8 +1,8 @@
 // nrf clock config
 const channelCount = 2
-const bitDepth = 24
-const NRF_I2S_MCK_32MDIV = 15
-const NRF_I2S_RATIO = 48
+const bitDepth = 16
+const NRF_I2S_MCK_32MDIV = 8
+const NRF_I2S_RATIO = 96
 
 const masterClock = 32_000_000 / NRF_I2S_MCK_32MDIV
 const masterClockDiv = NRF_I2S_RATIO
@@ -21,6 +21,7 @@ console.log({
 })
 console.log()
 
+// https://devzone.nordicsemi.com/f/nordic-q-a/30507/support-for-24-bit-stereo-audio-at-96-khz-on-i2s-bus
 // wm8904 clock config
 // Use PLL to derive SYSCLK from bit clock.
 // SYSCLK = 256fs (required if ADC is enabled)
@@ -31,8 +32,8 @@ const fRef = bitClock
 // 90MHz <= F_vco <= 100MHz
 
 const FLL_RATIO = 1 // 000 (i.e 1) recommended for FREF > 1MHz
-const NK = 42.6666666666666
-const FLL_OUT_DIV = 8 // 4,5,6...64
+const NK = 72
+const FLL_OUT_DIV = 9 // 4,5,6...64
 const fVco = fRef * NK * FLL_RATIO
 const fOut = fVco / FLL_OUT_DIV
 
