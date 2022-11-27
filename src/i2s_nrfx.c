@@ -7,7 +7,7 @@
 ////////////////////////////////////////////////////////////
 #define AUDIO_BUFFER_N_FRAMES 256
 #define AUDIO_BUFFER_N_CHANNELS 2
-#define BYTES_PER_SAMPLE 2
+#define BYTES_PER_SAMPLE 4
 #define AUDIO_BUFFER_N_SAMPLES (AUDIO_BUFFER_N_FRAMES * AUDIO_BUFFER_N_CHANNELS)
 #define AUDIO_BUFFER_BYTE_SIZE (BYTES_PER_SAMPLE * AUDIO_BUFFER_N_SAMPLES)
 #define AUDIO_BUFFER_WORD_SIZE (AUDIO_BUFFER_BYTE_SIZE / 4)
@@ -19,10 +19,10 @@ static float scratch_buffer_in[AUDIO_BUFFER_N_SAMPLES];
 // Use two pairs of rx/tx buffers for double buffering,
 // i.e process/render one pair of buffers while the other is
 // being transfered.
-static int16_t __attribute__((aligned(4))) rx_1[AUDIO_BUFFER_N_SAMPLES];
-static int16_t __attribute__((aligned(4))) tx_1[AUDIO_BUFFER_N_SAMPLES];
-static int16_t __attribute__((aligned(4))) rx_2[AUDIO_BUFFER_N_SAMPLES];
-static int16_t __attribute__((aligned(4))) tx_2[AUDIO_BUFFER_N_SAMPLES];
+static int32_t __attribute__((aligned(4))) rx_1[AUDIO_BUFFER_N_SAMPLES];
+static int32_t __attribute__((aligned(4))) tx_1[AUDIO_BUFFER_N_SAMPLES];
+static int32_t __attribute__((aligned(4))) rx_2[AUDIO_BUFFER_N_SAMPLES];
+static int32_t __attribute__((aligned(4))) tx_2[AUDIO_BUFFER_N_SAMPLES];
 nrfx_i2s_buffers_t nrfx_i2s_buffers_1 = {
     .p_rx_buffer = (uint32_t *)(&rx_1), .p_tx_buffer = (uint32_t *)(&tx_1)
 };
@@ -74,13 +74,13 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
             }
 
             nrfx_i2s_buffers_t* buffers_to_process = processing_buffers_1 ? &nrfx_i2s_buffers_1 : &nrfx_i2s_buffers_2;
-            // TODO: not always int16_t
-            int16_t *tx = (int16_t *)buffers_to_process->p_tx_buffer;
-            int16_t *rx = (int16_t *)buffers_to_process->p_rx_buffer;
+            // TODO: not always int32_t
+            int32_t *tx = (int32_t *)buffers_to_process->p_tx_buffer;
+            int32_t *rx = (int32_t *)buffers_to_process->p_rx_buffer;
 
             // Convert incoming audio from PCM
             for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
-                scratch_buffer_in[i] = rx[i] / 32767.0;
+                scratch_buffer_in[i] = rx[i] / 4194304.0;
             }
 
             memset(scratch_buffer_out, 0, AUDIO_BUFFER_N_SAMPLES * sizeof(float));
@@ -94,7 +94,7 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
 
             // Convert outgoing audio to PCM
             for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
-                tx[i] = scratch_buffer_out[i] * 32767.0; // TODO: saturated?
+                tx[i] = scratch_buffer_out[i] * 4194304.0; // TODO: saturated?
             }
 
             nrfx_i2s_buffers_t* buffers_to_set = processing_buffers_1 ? &nrfx_i2s_buffers_2 : &nrfx_i2s_buffers_1;
@@ -114,7 +114,7 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
 const uint8_t lrck_pin = 29; // 29; // P0.29 7 aka word select
 const uint8_t sdout_pin = 30; // 30; // P0.30 25
 const uint8_t sck_pin = 4;  // 31; // aka bitcklock P0.31 26
-const uint8_t mck_pin = NRFX_I2S_PIN_NOT_USED; // 31;   // 27; // NRFX_I2S_PIN_NOT_USED;
+const uint8_t mck_pin = 31;   // 27; // NRFX_I2S_PIN_NOT_USED;
 const uint8_t sdin_pin = 28; // NRFX_I2S_PIN_NOT_USED; // 6; // NRFX_I2S_PIN_NOT_USED;
 
 nrfx_i2s_config_t nrfx_i2s_cfg = {
@@ -133,9 +133,9 @@ nrfx_i2s_config_t nrfx_i2s_cfg = {
     .mck_setup = NRF_I2S_MCK_32MDIV15,
     .ratio = NRF_I2S_RATIO_48X,
 #else
-    .sample_width = NRF_I2S_SWIDTH_16BIT,
-    .mck_setup = NRF_I2S_MCK_32MDIV8,
-    .ratio = NRF_I2S_RATIO_96X,
+    .sample_width = NRF_I2S_SWIDTH_24BIT,
+    .mck_setup = NRF_I2S_MCK_32MDIV15,
+    .ratio = NRF_I2S_RATIO_48X,
 #endif
 };
 

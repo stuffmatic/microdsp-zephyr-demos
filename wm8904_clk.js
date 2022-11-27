@@ -1,8 +1,8 @@
-// nrf clock config
+//  nrf clock config
 const channelCount = 2
-const bitDepth = 16
-const NRF_I2S_MCK_32MDIV = 8
-const NRF_I2S_RATIO = 96
+const bitDepth = 24
+const NRF_I2S_MCK_32MDIV = 15
+const NRF_I2S_RATIO = 48
 
 const masterClock = 32_000_000 / NRF_I2S_MCK_32MDIV
 const masterClockDiv = NRF_I2S_RATIO
@@ -32,8 +32,8 @@ const fRef = bitClock
 // 90MHz <= F_vco <= 100MHz
 
 const FLL_RATIO = 1 // 000 (i.e 1) recommended for FREF > 1MHz
-const NK = 72
-const FLL_OUT_DIV = 9 // 4,5,6...64
+const NK = 42.6666666666666
+const FLL_OUT_DIV = 8 // 4,5,6...64
 const fVco = fRef * NK * FLL_RATIO
 const fOut = fVco / FLL_OUT_DIV
 
@@ -45,7 +45,8 @@ console.log({
   FLL_OUT_DIV,
   NK,
   fVco,
-  fOut
+  fOut,
+  fRef
 })
 
 if (sysclk < 3_000_000) {

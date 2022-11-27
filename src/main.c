@@ -18,15 +18,15 @@ typedef struct {
 	float dphase;
 } oscillator_state_t;
 
-#define OSC_FREQ_HZ 600.0
+#define OSC_FREQ_HZ 350.0
+#define OSC_GAIN 0.2
 
 static void processing_cb(void* data, uint32_t frame_count, uint32_t channel_count, float *tx, const float *rx) {
 		oscillator_state_t* osc_state = (oscillator_state_t*)data;
     for (int i = 0; i < frame_count; i++) {
         const float a = osc_state->phase < 0 ? 1 : -1;
-        const float gain = 0.5;
 				float phase = osc_state->phase;
-				float value = gain * (phase + a * phase * phase);
+				float value = OSC_GAIN * (phase + a * phase * phase);
         tx[channel_count * i] = value;
 				tx[channel_count * i + 1] = value;
         phase += osc_state->dphase;
