@@ -1,12 +1,13 @@
 //  nrf clock config
 const channelCount = 2
-const bitDepth = 24
+// a 24 bit sample is transfered in a 32 bit word, so the bitclock
+// changes 32 times per sample
+const bitDepth = 32
 const NRF_I2S_MCK_32MDIV = 15
 const NRF_I2S_RATIO = 48
 
 const masterClock = 32_000_000 / NRF_I2S_MCK_32MDIV
-const masterClockDiv = NRF_I2S_RATIO
-const fs = masterClock / masterClockDiv
+const fs = masterClock / NRF_I2S_RATIO
 const bitClock = fs * channelCount * bitDepth
 
 console.log("nrf clock config:")
@@ -32,7 +33,7 @@ const fRef = bitClock
 // 90MHz <= F_vco <= 100MHz
 
 const FLL_RATIO = 1 // 000 (i.e 1) recommended for FREF > 1MHz
-const NK = 42.6666666666666
+const NK = 32
 const FLL_OUT_DIV = 8 // 4,5,6...64
 const fVco = fRef * NK * FLL_RATIO
 const fOut = fVco / FLL_OUT_DIV

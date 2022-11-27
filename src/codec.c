@@ -409,15 +409,15 @@ void init_wm8904_codec()
 
         // wm8904_write_register(WM8904_FLL_CONTROL_1, 0x0000);
         // wm8904_write_register(WM8904_FLL_CONTROL_1, WM8904_FLL_FRACN_ENA | WM8904_FLL_ENA);
-        wm8904_write_reg(WM8904_FLL_CONTROL_1, 0b101); // ENABLE FLL  FRACN_ENA true
         // wm8904_write_register(WM8904_FLL_CONTROL_2, WM8904_FLL_OUTDIV(7)| WM8904_FLL_FRATIO(4));
-        wm8904_write_reg(WM8904_FLL_CONTROL_2, (uint16_t)(8 << 8));
+        wm8904_write_reg(WM8904_FLL_CONTROL_2, 8 << 8);
         // wm8904_write_register(WM8904_FLL_CONTROL_3, WM8904_FLL_K(0x8000));
-        wm8904_write_reg(WM8904_FLL_CONTROL_3, (uint16_t)0xaaab);
+        wm8904_write_reg(WM8904_FLL_CONTROL_3, 0x0);
         // wm8904_write_register(WM8904_FLL_CONTROL_4, WM8904_FLL_N(0xBB));
-        wm8904_write_reg(WM8904_FLL_CONTROL_4, (42 << 5));
+        wm8904_write_reg(WM8904_FLL_CONTROL_4, 32 << 5); //
         // WM8904_FLL_CONTROL_5
-        wm8904_write_reg(WM8904_FLL_CONTROL_5, 0b1); // use bitclock as FLL reference
+        wm8904_write_reg(WM8904_FLL_CONTROL_5, 0b1); // use bitckl as FLL reference
+        wm8904_write_reg(WM8904_FLL_CONTROL_1, 0b001); // ENABLE FLL  FRACN_ENA true
         k_msleep(5);
 
         // wm8904_write_register(WM8904_CLOCK_RATES_0, 0x0000);
@@ -483,7 +483,7 @@ void init_wm8904_codec()
         wm8904_write_reg(WM8904_ANALOGUE_OUT2_RIGHT, 0b111001 | (1 << 7));
 
         k_msleep(100);
-
-        wm8904_write_reg(WM8904_CLOCK_RATES_2, (1 << 1) | (1 << 2) | (1 << 14)); // sysclk src = pll, ENABLE CLK_SYS_ENA
+        // sysclk src = pll, enable sys clk, enable dsp clk
+        wm8904_write_reg(WM8904_CLOCK_RATES_2, (1 << 1) | (1 << 2) | (1 << 14));
     }
 }

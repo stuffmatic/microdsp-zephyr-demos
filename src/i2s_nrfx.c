@@ -5,7 +5,7 @@
 ////////////////////////////////////////////////////////////
 // Audio buffers
 ////////////////////////////////////////////////////////////
-#define AUDIO_BUFFER_N_FRAMES 256
+#define AUDIO_BUFFER_N_FRAMES 4096
 #define AUDIO_BUFFER_N_CHANNELS 2
 #define BYTES_PER_SAMPLE 4
 #define AUDIO_BUFFER_N_SAMPLES (AUDIO_BUFFER_N_FRAMES * AUDIO_BUFFER_N_CHANNELS)
@@ -80,7 +80,7 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
 
             // Convert incoming audio from PCM
             for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
-                scratch_buffer_in[i] = rx[i] / 4194304.0;
+                scratch_buffer_in[i] = rx[i] / 8388607.0;
             }
 
             memset(scratch_buffer_out, 0, AUDIO_BUFFER_N_SAMPLES * sizeof(float));
@@ -94,7 +94,7 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
 
             // Convert outgoing audio to PCM
             for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
-                tx[i] = scratch_buffer_out[i] * 4194304.0; // TODO: saturated?
+                tx[i] = scratch_buffer_out[i] * 8388607.0; // TODO: saturated?
             }
 
             nrfx_i2s_buffers_t* buffers_to_set = processing_buffers_1 ? &nrfx_i2s_buffers_2 : &nrfx_i2s_buffers_1;
@@ -114,7 +114,7 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
 const uint8_t lrck_pin = 29; // 29; // P0.29 7 aka word select
 const uint8_t sdout_pin = 30; // 30; // P0.30 25
 const uint8_t sck_pin = 4;  // 31; // aka bitcklock P0.31 26
-const uint8_t mck_pin = 31;   // 27; // NRFX_I2S_PIN_NOT_USED;
+const uint8_t mck_pin = NRFX_I2S_PIN_NOT_USED; // 31;   // 27; // NRFX_I2S_PIN_NOT_USED;
 const uint8_t sdin_pin = 28; // NRFX_I2S_PIN_NOT_USED; // 6; // NRFX_I2S_PIN_NOT_USED;
 
 nrfx_i2s_config_t nrfx_i2s_cfg = {
