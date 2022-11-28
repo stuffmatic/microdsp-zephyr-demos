@@ -76,6 +76,7 @@ ExternalProject_Add(
   INSTALL_COMMAND ""
   SOURCE_DIR ${crate_root}
   BUILD_BYPRODUCTS ${LIB_PATH}
+  BUILD_ALWAYS true
   COMMENT "Building rust library '${crate_name}' target='${CARGO_TARGET}' profile='${CARGO_PROFILE}' args='${CARGO_ARGS}'"
 )
 add_library(${LIB_FILENAME} STATIC IMPORTED GLOBAL)
