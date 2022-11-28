@@ -1,16 +1,34 @@
-/*
- * Copyright (c) 2016 Intel Corporation
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 #include <zephyr/zephyr.h>
 #include <zephyr/drivers/gpio.h>
 #include <rust_lib.h>
 
 #include "audio_processing.h"
-#include "codec.h"
 #include "i2s_nrfx.h"
+
+#define CODEC_WM8904
+
+// TODO: put these in config structs (in config.h) with
+/*
+codec_init_fn
+i2s pins
+i2s div and ratio
+sample_rate (compute from div and ratio)
+*/
+
+#ifdef CODEC_WM8758
+#include "codecs/wm8758.h"
+#define SAMPLE_RATE 44100.0
+void init_codec() {
+    init_wm8758();
+}
+#endif
+#ifdef CODEC_WM8904
+#include "codecs/wm8904.h"
+#define SAMPLE_RATE 44444.4
+void init_codec() {
+    init_wm8904();
+}
+#endif
 
 typedef struct
 {
@@ -20,7 +38,6 @@ typedef struct
 
 #define OSC_FREQ_HZ 350.0
 #define OSC_GAIN 0.01
-#define SAMPLE_RATE 44100.0
 static void processing_cb(void *data, uint32_t frame_count, uint32_t channel_count, float *tx, const float *rx)
 {
     oscillator_state_t *osc_state = (oscillator_state_t *)data;
@@ -60,14 +77,14 @@ static void processing_cb(void *data, uint32_t frame_count, uint32_t channel_cou
     }
 }
 
-static void dropout_cb()
+static void dropout_cb(void *data)
 {
     printk("dropout!\n");
 }
 
 static oscillator_state_t oscillator_state = {
     .phase = -1,
-    .dphase = 2 * OSC_FREQ_HZ / SAMPLE_RATE
+    .dphase = 4 * OSC_FREQ_HZ / SAMPLE_RATE
 };
 
 /* 1000 msec = 1 sec */
@@ -83,7 +100,7 @@ void main(void)
     int test = rust_test_fn();
     printk("rust_test_fn returned %d\n", test);
 
-    init_wm8904_codec();
+    init_codec();
 
     audio_processing_options_t processing_options = {
         .dropout_cb = dropout_cb,

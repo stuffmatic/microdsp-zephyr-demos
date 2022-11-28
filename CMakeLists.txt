@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(rust_audio_demo)
 
-target_sources(app PRIVATE src/main.c src/i2s_nrfx.c src/codec.c)
+target_sources(app PRIVATE src/main.c src/i2s_nrfx.c src/codecs/wm8758.c src/codecs/wm8904.c)
 
 # Import the add_rust_lib function
 include(AddRustLib.cmake)

@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////////////
 // Audio buffers
 ////////////////////////////////////////////////////////////
-#define AUDIO_BUFFER_N_FRAMES 4096
+#define AUDIO_BUFFER_N_FRAMES 256
 #define AUDIO_BUFFER_N_CHANNELS 2
-#define BYTES_PER_SAMPLE 4
+#define BYTES_PER_SAMPLE 4 // 24 bit samples are transfered in 32 bit words
 #define AUDIO_BUFFER_N_SAMPLES (AUDIO_BUFFER_N_FRAMES * AUDIO_BUFFER_N_CHANNELS)
 #define AUDIO_BUFFER_BYTE_SIZE (BYTES_PER_SAMPLE * AUDIO_BUFFER_N_SAMPLES)
 #define AUDIO_BUFFER_WORD_SIZE (AUDIO_BUFFER_BYTE_SIZE / 4)
@@ -61,7 +61,7 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
         if (k_sem_take(&processing_thread_semaphore, K_FOREVER) == 0) {
             audio_processing_options_t* processing_options = (audio_processing_options_t*)p1;
             if (atomic_test_bit(&dropout_occurred, 0)) {
-                processing_options->dropout_cb();
+                processing_options->dropout_cb(processing_options);
             }
             uint32_t processing_sem_take_time = k_cycle_get_32();
             uint32_t cycles_spent = processing_sem_take_time - processing_sem_give_time;
@@ -128,15 +128,9 @@ nrfx_i2s_config_t nrfx_i2s_cfg = {
     .format = NRF_I2S_FORMAT_I2S,
     .alignment = NRF_I2S_ALIGN_LEFT,
     .channels = NRF_I2S_CHANNELS_STEREO,
-#ifdef USE_WM8904
     .sample_width = NRF_I2S_SWIDTH_24BIT,
     .mck_setup = NRF_I2S_MCK_32MDIV15,
     .ratio = NRF_I2S_RATIO_48X,
-#else
-    .sample_width = NRF_I2S_SWIDTH_24BIT,
-    .mck_setup = NRF_I2S_MCK_32MDIV15,
-    .ratio = NRF_I2S_RATIO_48X,
-#endif
 };
 
 ISR_DIRECT_DECLARE(i2s_isr_handler)

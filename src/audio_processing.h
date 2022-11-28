@@ -8,7 +8,7 @@ typedef void (*audio_processing_callback_t)(
   float* tx,
   const float* rx
 );
-typedef void (*dropout_callback_t)();
+typedef void (*dropout_callback_t)(void* cb_data);
 
 typedef struct {
   audio_processing_callback_t processing_cb;
