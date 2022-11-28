@@ -101,8 +101,6 @@ void wm8904_init()
         wm8904_write_reg(WM8904_POWER_MANAGEMENT_6, 0b1111);
         k_msleep(5);
 
-        // wm8904_write_register(WM8904_ANALOGUE_LEFT_INPUT_0, WM8904_LIN_VOL(0x10));
-        // wm8904_write_register(WM8904_ANALOGUE_RIGHT_INPUT_0, WM8904_RIN_VOL(0x10));
 
         // wm8904_write_register(WM8904_ANALOGUE_HP_0,
         // 				WM8904_HPL_ENA | WM8904_HPR_ENA);
@@ -144,7 +142,22 @@ void wm8904_init()
         wm8904_write_reg(WM8904_ANALOGUE_OUT2_RIGHT, 0b111001 | (1 << 7));
 
         k_msleep(100);
+
+        // mic test, left channel
+        if (false)
+        {
+            // unmute, full vol
+            wm8904_write_reg(WM8904_ANALOGUE_LEFT_INPUT_0, 0b11111);
+            // wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_0, 0b11111);
+            wm8904_write_reg(WM8904_ANALOGUE_LEFT_INPUT_1, 0b0010000);
+
+            // mic bypass
+            wm8904_write_reg(WM8904_ANALOGUE_OUT12_ZC, 0b1111);
+        }
+
         // sysclk src = pll, enable sys clk, enable dsp clk
+        // if there's no mclk input, make sure this is the last write.
         wm8904_write_reg(WM8904_CLOCK_RATES_2, (1 << 1) | (1 << 2) | (1 << 14));
+
     }
 }
