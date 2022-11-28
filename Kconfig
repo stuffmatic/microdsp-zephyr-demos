@@ -1,0 +1,9 @@
+source "Kconfig.zephyr"
+
+config AUDIO_CODEC_WM8758
+  bool "Use WM8758 audio codec"
+  default n
+
+config AUDIO_CODEC_WM8904
+  bool "Use WM8904 audio codec"
+  default n

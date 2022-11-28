@@ -5,8 +5,6 @@
 #include "audio_processing.h"
 #include "i2s_nrfx.h"
 
-#define CODEC_WM8904
-
 // TODO: put these in config structs (in config.h) with
 /*
 codec_init_fn
@@ -15,14 +13,14 @@ i2s div and ratio
 sample_rate (compute from div and ratio)
 */
 
-#ifdef CODEC_WM8758
+#ifdef CONFIG_AUDIO_CODEC_8758
 #include "codecs/wm8758.h"
 #define SAMPLE_RATE 44100.0
 void init_codec() {
     wm8758_init();
 }
 #endif
-#ifdef CODEC_WM8904
+#ifdef CONFIG_AUDIO_CODEC_WM8904
 #include "codecs/wm8904.h"
 #define SAMPLE_RATE 44444.4
 void init_codec() {
@@ -43,37 +41,21 @@ static void processing_cb(void *data, uint32_t frame_count, uint32_t channel_cou
     oscillator_state_t *osc_state = (oscillator_state_t *)data;
     for (int i = 0; i < frame_count; i++)
     {
-        if (true) {
-            float x = osc_state->phase > 1 ? osc_state->phase - 2 : osc_state->phase;
-            float sign = osc_state->phase > 1 ? -1 : 1;
+        float x = osc_state->phase > 1 ? osc_state->phase - 2 : osc_state->phase;
+        float sign = osc_state->phase > 1 ? -1 : 1;
 
-            float x_sq = x * x;
-            float x_qu = x_sq * x_sq;
-            float value = ((float)0.2146) * x_qu - ((float)1.214601836) * x_sq + 1;
+        float x_sq = x * x;
+        float x_qu = x_sq * x_sq;
+        float value = ((float)0.2146) * x_qu - ((float)1.214601836) * x_sq + 1;
 
-            osc_state->phase += osc_state->dphase;
+        osc_state->phase += osc_state->dphase;
 
-            if (osc_state->phase > 3.0) {
-                osc_state->phase -= 4.; // TODO: make this work for (very) high freq? Or limit d_phase?
-            }
-
-            tx[channel_count * i] = OSC_GAIN * value * sign;
-            tx[channel_count * i + 1] = OSC_GAIN * value * sign;
+        if (osc_state->phase > 3.0) {
+            osc_state->phase -= 4.;
         }
-        else
-        {
-            const float a = osc_state->phase < 0 ? 1 : -1;
-            float phase = osc_state->phase;
-            float value = OSC_GAIN * (phase + a * phase * phase);
-            tx[channel_count * i] = value;
-            tx[channel_count * i + 1] = value;
-            phase += osc_state->dphase;
-            if (phase > 1)
-            {
-                phase -= 2;
-            }
-            osc_state->phase = phase;
-        }
+
+        tx[channel_count * i] = OSC_GAIN * value * sign;
+        tx[channel_count * i + 1] = OSC_GAIN * value * sign;
     }
 }
 
