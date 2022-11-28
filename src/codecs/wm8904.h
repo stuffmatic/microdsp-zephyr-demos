@@ -1,6 +1,8 @@
 #ifndef WM8904_H
 #define WM8904_H
 
+#define WM8904_ADDRESS 0b11010
+
 // Registers
 #define WM8904_SW_RESET_AND_ID 0x00
 #define WM8904_BIAS_CONTROL_0 0x04
@@ -102,6 +104,8 @@
 #define WM8904_FLL_NCO_TEST_0 0xF7
 #define WM8904_FLL_NCO_TEST_1 0xF8
 
-void init_wm8904();
+int wm8904_read_reg(uint8_t reg_addr, uint16_t* result);
+int wm8904_write_reg(uint8_t reg_addr, uint16_t data);
+void wm8904_init();
 
 #endif

@@ -1,19 +1,18 @@
 #include <zephyr/drivers/i2c.h>
 #include "wm8904.h"
 
-#define WM8758B_ADDRESS 0b11010
-#define WM8904_ADDRESS 0b11010
 #define I2C_NODE DT_NODELABEL(i2c0)
 static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
 
-uint32_t wm8904_read_reg(uint8_t reg_addr)
+int wm8904_read_reg(uint8_t reg_addr, uint16_t* result)
 {
     uint8_t write_buf[1] = { reg_addr };
     uint8_t read_buf[2] = { 0, 0 };
     int read_rc = i2c_write_read(i2c_dev, WM8904_ADDRESS, write_buf, 1, read_buf, 2);
-    printk("read_reg result %d\n", read_rc);
-    uint32_t result = ((read_buf[0] << 8) & 0xff00) | read_buf[1];
-    return result;
+    if (read_rc == 0) {
+        *result = ((read_buf[0] << 8) & 0xff00) | read_buf[1];
+    }
+    return read_rc;
 }
 
 int wm8904_write_reg(uint8_t reg_addr, uint16_t data)
@@ -24,13 +23,12 @@ int wm8904_write_reg(uint8_t reg_addr, uint16_t data)
         data & 0xff  // lsb
     };
     uint8_t read_buf[2] = { 0, 0 };
-    // int write_rc = i2c_write(i2c_dev, payload, 3, WM8904_ADDRESS);
     int write_rc = i2c_write_read(i2c_dev, WM8904_ADDRESS, write_buf, 3, read_buf, 2);
-    printk("write_reg result %d\n", write_rc);
+    // printk("write_reg result %d\n", write_rc);
     return write_rc;
 }
 
-void init_wm8904()
+void wm8904_init()
 {
     // https://github.com/avrxml/asf/blob/master/sam/components/audio/codec/wm8904/example/wm8904_example.c
     if (device_is_ready(i2c_dev))
@@ -41,7 +39,8 @@ void init_wm8904()
         // ensure correct operation.
         wm8904_write_reg(WM8904_SW_RESET_AND_ID, 0);
 
-        uint32_t device_id = wm8904_read_reg(WM8904_SW_RESET_AND_ID);
+        uint16_t device_id = 0;
+        wm8904_read_reg(WM8904_SW_RESET_AND_ID, &device_id);
         __ASSERT(device_id == 0x8904, "Failed to read wm8904 device id");
 
         // wm8904_write_register(WM8904_BIAS_CONTROL_0, WM8904_ISEL_HP_BIAS);

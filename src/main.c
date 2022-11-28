@@ -19,14 +19,14 @@ sample_rate (compute from div and ratio)
 #include "codecs/wm8758.h"
 #define SAMPLE_RATE 44100.0
 void init_codec() {
-    init_wm8758();
+    wm8758_init();
 }
 #endif
 #ifdef CODEC_WM8904
 #include "codecs/wm8904.h"
 #define SAMPLE_RATE 44444.4
 void init_codec() {
-    init_wm8904();
+    wm8904_init();
 }
 #endif
 
