@@ -1,6 +1,7 @@
 #include <zephyr/zephyr.h>
 #include <zephyr/drivers/gpio.h>
 #include <rust_lib.h>
+#include <rust_lib_2.h>
 
 #include "audio_processing.h"
 #include "i2s_nrfx.h"
@@ -79,8 +80,12 @@ static oscillator_state_t oscillator_state = {
 
 void main(void)
 {
+    void* p = malloc(4000);
+    printk("allocated pointer %d\n", p);
     int test = rust_test_fn();
     printk("rust_test_fn returned %d\n", test);
+    test = rust_test_fn_2();
+    printk("rust_test_fn_2 returned %d\n", test);
 
     init_codec();
 

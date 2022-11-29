@@ -15,3 +15,9 @@ add_rust_lib(
   ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib # Crate root dir
   ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib/include # C header dir
 )
+
+add_rust_lib(
+  rust-lib-2 # Crate name as specified in Cargo.toml
+  ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib_2 # Crate root dir
+  ${CMAKE_CURRENT_SOURCE_DIR}/rust_lib_2/include # C header dir
+)

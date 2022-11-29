@@ -26,7 +26,7 @@ fn alloc_error(layout: Layout) -> ! {
 }
 
 #[no_mangle]
-pub extern "C" fn rust_test_fn() -> u32 {
+pub extern "C" fn rust_test_fn_2() -> u32 {
     let v = vec![10_f32; 1000];
-    return 456789
+    return 1234567
 }

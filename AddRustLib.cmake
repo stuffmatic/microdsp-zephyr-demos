@@ -2,7 +2,7 @@ include(ExternalProject)
 
 # A helper function for adding a dependency on a
 # rust crate that is compiled to a static library and
-# linked into the app. By deafult, the create is compiled
+# linked into the app. By deafult, the crate is compiled
 # in release mode unless CONFIG_DEBUG_OPTIMIZATIONS is set.
 # To override this behavior, set CARGO_PROFILE to 'release'
 # or 'debug' before calling the function.
@@ -61,18 +61,22 @@ elseif(DEFINED CONFIG_CPU_CORTEX_M4 OR DEFINED CONFIG_CPU_CORTEX_M7)
   set(CARGO_TARGET thumbv7em-none-eabi)
   endif()
 else()
-  # TODO: Add more CPU types
-  message(FATAL_ERROR "Failed to set a cargo build target for CPU type")
+  # TODO: Support more CPU types
+  message(FATAL_ERROR "Failed to set cargo build target for CPU type")
 endif()
 
-set(LIB_PATH ${crate_root}/target/${CARGO_TARGET}/${CARGO_PROFILE}/${LIB_FILENAME})
+set(CARGO_TARGET_DIR ${CMAKE_BINARY_DIR}/rust_crates/${crate_name})
+
+set(LIB_PATH ${CARGO_TARGET_DIR}/${CARGO_TARGET}/${CARGO_PROFILE}/${LIB_FILENAME})
+
+set(EXT_PROJ_NAME rust_crate_ext_proj_${SANITIZED_LIB_NAME})
 
 # The following is adapted from the external_lib zephyr example
 ExternalProject_Add(
-  ext_proj
+  ${EXT_PROJ_NAME}
   BINARY_DIR ${crate_root}
   CONFIGURE_COMMAND ""
-  BUILD_COMMAND cargo build --target ${CARGO_TARGET} ${CARGO_ARGS}
+  BUILD_COMMAND CARGO_TARGET_DIR=${CARGO_TARGET_DIR} cargo build --target ${CARGO_TARGET} ${CARGO_ARGS}
   INSTALL_COMMAND ""
   SOURCE_DIR ${crate_root}
   BUILD_BYPRODUCTS ${LIB_PATH}
@@ -80,10 +84,10 @@ ExternalProject_Add(
   COMMENT "Building rust library '${crate_name}' target='${CARGO_TARGET}' profile='${CARGO_PROFILE}' args='${CARGO_ARGS}'"
 )
 add_library(${LIB_FILENAME} STATIC IMPORTED GLOBAL)
-add_dependencies(${LIB_FILENAME} ext_proj)
+add_dependencies(${LIB_FILENAME} ${EXT_PROJ_NAME})
 set_target_properties(${LIB_FILENAME} PROPERTIES IMPORTED_LOCATION ${LIB_PATH})
 set_target_properties(${LIB_FILENAME} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${include_path})
 
-target_link_libraries(app PUBLIC ${LIB_FILENAME})
+target_link_libraries(app PUBLIC ${LIB_FILENAME} -Wl,--allow-multiple-definition)
 
 endfunction()
