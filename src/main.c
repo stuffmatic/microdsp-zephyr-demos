@@ -1,33 +1,9 @@
 #include <zephyr/zephyr.h>
 #include <zephyr/drivers/gpio.h>
-#include <rust_lib.h>
-#include <rust_lib_2.h>
 
-#include "audio_processing.h"
-#include "i2s_nrfx.h"
-
-// TODO: put these in config structs (in config.h) with
-/*
-codec_init_fn
-i2s pins
-i2s div and ratio
-sample_rate (compute from div and ratio)
-*/
-
-#ifdef CONFIG_AUDIO_CODEC_8758
-#include "codecs/wm8758.h"
-#define SAMPLE_RATE 44100.0
-void init_codec() {
-    wm8758_init();
-}
-#endif
-#ifdef CONFIG_AUDIO_CODEC_WM8904
-#include "codecs/wm8904.h"
-#define SAMPLE_RATE 44444.4
-void init_codec() {
-    wm8904_init();
-}
-#endif
+#include "audio_callbacks.h"
+#include "audio_cfg.h"
+#include "i2s.h"
 
 typedef struct
 {
@@ -36,10 +12,10 @@ typedef struct
 } oscillator_state_t;
 
 #define OSC_FREQ_HZ 350.0
-#define OSC_GAIN 0.01
-static void processing_cb(void *data, uint32_t frame_count, uint32_t channel_count, float *tx, const float *rx)
+#define OSC_GAIN ((float)0.01)
+static void processing_cb(void *cb_data, uint32_t frame_count, uint32_t channel_count, float *tx, const float *rx)
 {
-    oscillator_state_t *osc_state = (oscillator_state_t *)data;
+    oscillator_state_t *osc_state = (oscillator_state_t *)cb_data;
     for (int i = 0; i < frame_count; i++)
     {
         float x = osc_state->phase > 1 ? osc_state->phase - 2 : osc_state->phase;
@@ -47,7 +23,7 @@ static void processing_cb(void *data, uint32_t frame_count, uint32_t channel_cou
 
         float x_sq = x * x;
         float x_qu = x_sq * x_sq;
-        float value = ((float)0.2146) * x_qu - ((float)1.214601836) * x_sq + 1;
+        float value = ((float)0.2146) * x_qu - 1.214601836f * x_sq + 1.0f;
 
         osc_state->phase += osc_state->dphase;
 
@@ -67,10 +43,9 @@ static void dropout_cb(void *data)
 
 static oscillator_state_t oscillator_state = {
     .phase = -1,
-    .dphase = 4 * OSC_FREQ_HZ / SAMPLE_RATE
+    .dphase = 0
 };
 
-/* 1000 msec = 1 sec */
 #define SLEEP_TIME_MS 1000
 
 /* The devicetree node identifier for the "led0" alias. */
@@ -80,20 +55,16 @@ static oscillator_state_t oscillator_state = {
 
 void main(void)
 {
-    void* p = malloc(4000);
-    printk("allocated pointer %d\n", p);
-    int test = rust_test_fn();
-    printk("rust_test_fn returned %d\n", test);
-    test = rust_test_fn_2();
-    printk("rust_test_fn_2 returned %d\n", test);
+    oscillator_state.dphase = 4 * OSC_FREQ_HZ / audio_cfg.sample_rate;
+    audio_cfg.init_codec();
 
-    init_codec();
-
-    audio_processing_options_t processing_options = {
+    audio_callbacks_t audio_callbacks = {
         .dropout_cb = dropout_cb,
         .processing_cb = processing_cb,
-        .processing_cb_data = &oscillator_state};
-    i2s_start(&processing_options);
+        .cb_data = &oscillator_state,
+    };
+
+    i2s_start(&audio_cfg, &audio_callbacks);
 
     while (1)
     {

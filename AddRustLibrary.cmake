@@ -16,7 +16,7 @@ include(ExternalProject)
 #                header.h is placed under include_path, it can be included
 #                from the app code like this: #include <header.h>.
 function(
-  add_rust_lib
+  add_rust_library
   crate_name
   crate_root
   include_path
@@ -49,13 +49,13 @@ if(DEFINED CONFIG_CPU_CORTEX_M0)
 elseif(DEFINED CONFIG_CPU_CORTEX_M3)
   set(CARGO_TARGET thumbv7em-none-eabi)
 elseif(DEFINED CONFIG_CPU_CORTEX_M33)
-  if(DEFINED CPU_HAS_FPU)
+  if(DEFINED CONFIG_FPU)
   set(CARGO_TARGET thumbv8m.main-none-eabihf)
   else()
   set(CARGO_TARGET thumbv8m.main-none-eabih)
   endif()
 elseif(DEFINED CONFIG_CPU_CORTEX_M4 OR DEFINED CONFIG_CPU_CORTEX_M7)
-  if(DEFINED CPU_HAS_FPU)
+  if(DEFINED CONFIG_FPU)
   set(CARGO_TARGET thumbv7em-none-eabihf)
   else()
   set(CARGO_TARGET thumbv7em-none-eabi)
@@ -65,13 +65,14 @@ else()
   message(FATAL_ERROR "Failed to set cargo build target for CPU type")
 endif()
 
+# Output cargo build artefacts to the cmake build folder
 set(CARGO_TARGET_DIR ${CMAKE_BINARY_DIR}/rust_crates/${crate_name})
 
+# Add an external project for building the rust library.
+# Inspired by the external_lib zephyr example.
 set(LIB_PATH ${CARGO_TARGET_DIR}/${CARGO_TARGET}/${CARGO_PROFILE}/${LIB_FILENAME})
+set(EXT_PROJ_NAME rust_ext_proj_${SANITIZED_LIB_NAME})
 
-set(EXT_PROJ_NAME rust_crate_ext_proj_${SANITIZED_LIB_NAME})
-
-# The following is adapted from the external_lib zephyr example
 ExternalProject_Add(
   ${EXT_PROJ_NAME}
   BINARY_DIR ${crate_root}
@@ -80,14 +81,19 @@ ExternalProject_Add(
   INSTALL_COMMAND ""
   SOURCE_DIR ${crate_root}
   BUILD_BYPRODUCTS ${LIB_PATH}
-  BUILD_ALWAYS true
+  BUILD_ALWAYS true # Always run cargo build. Reduces to a no-op if the built library is up to date.
   COMMENT "Building rust library '${crate_name}' target='${CARGO_TARGET}' profile='${CARGO_PROFILE}' args='${CARGO_ARGS}'"
 )
 add_library(${LIB_FILENAME} STATIC IMPORTED GLOBAL)
 add_dependencies(${LIB_FILENAME} ${EXT_PROJ_NAME})
 set_target_properties(${LIB_FILENAME} PROPERTIES IMPORTED_LOCATION ${LIB_PATH})
+
+# Add C headers dir to include directories
 set_target_properties(${LIB_FILENAME} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${include_path})
 
+# Link static library. --allow-multiple-definition
+# is needed when linking to multiple rust libs that may
+# contain the same rust compiler builtins.
 target_link_libraries(app PUBLIC ${LIB_FILENAME} -Wl,--allow-multiple-definition)
 
 endfunction()

@@ -30,9 +30,9 @@ void init_wm8758()
     if (device_is_ready(i2c_dev))
     {
         // Reset command
-        wm8758_write_reg(0, 0);
+        wm8758_write_reg(WM8758B_SW_RESET, 0);
         // biascut
-        wm8758_write_reg(61, (1 << 8));
+        wm8758_write_reg(WM8758B_BIAS_CTRL, (1 << 8));
 
         // Set
         // PLL enable (1 << 5)
@@ -43,73 +43,73 @@ void init_wm8758()
         const int bufioen = 1 << 2;
         const int biasen = 1 << 3;
         const int pllen = 1 << 5;
-        wm8758_write_reg(1, pllen | biasen | bufioen | vmidsel);
+        wm8758_write_reg(WM8758B_POWER_MANAGEMENT_1, pllen | biasen | bufioen | vmidsel);
 
         // Enable OUT1 left/right
         const int adc_enable = (1 << 1) | (1 << 0);
         const int input_pga_enable = (1 << 3) | (1 << 2);
         const int boost_enable = (1 << 5) | (1 << 4);
         const int out1_enable = (1 << 8) | (1 << 7);
-        wm8758_write_reg(2, out1_enable | boost_enable | input_pga_enable | adc_enable);
+        wm8758_write_reg(WM8758B_POWER_MANAGEMENT_2, out1_enable | boost_enable | input_pga_enable | adc_enable);
 
         // Enable DAC left/right and left/right mixer
         const int dac_enable = (1 << 1) | (1 << 0);
         const int mixer_enable = (1 << 3) | (1 << 2);
-        wm8758_write_reg(3, mixer_enable | dac_enable);
+        wm8758_write_reg(WM8758B_POWER_MANAGEMENT_3, mixer_enable | dac_enable);
 
         // 16 bit i2s format
-        wm8758_write_reg(4, 0x10);
+        wm8758_write_reg(WM8758B_AUDIO_INTERFACE, 0x10);
 
         // companding
         // write_reg(i2c_num, 5, 0x0);
 
         // CLKSEL (use PLL)
-        wm8758_write_reg(6, 0b100000000); // 0x140 should be the default value
+        wm8758_write_reg(WM8758B_CLOCK_GEN_CTRL, 0b100000000); // 0x140 should be the default value
 
         // TODO: The following PLL values
         // are based on an actual sample rate of 41666.7
         // PLL N (10, no pre scale)
-        wm8758_write_reg(36, 0x0b);
+        wm8758_write_reg(WM8758B_PLL_N, 0x0b);
         // PLL K (0.66666) 1, 2, 3
-        wm8758_write_reg(37, 0b10101010);
-        wm8758_write_reg(38, 0b10101010);
-        wm8758_write_reg(39, 0b10101011);
+        wm8758_write_reg(WM8758B_PLL_K_1, 0b10101010);
+        wm8758_write_reg(WM8758B_PLL_K_2, 0b10101010);
+        wm8758_write_reg(WM8758B_PLL_K_3, 0b10101011);
 
         // Set l/r dac volume
-        // wm8758_write_reg(11, 0x1ff);
-        // wm8758_write_reg(12, 0x1ff);
+        // wm8758_write_reg(WM8758B_LEFT_DAC_DIGITAL_VOL, 0x1ff);
+        // wm8758_write_reg(WM8758B_RIGHT_DAC_DIGITAL_VOL, 0x1ff);
 
         // ALC
-        // write_reg(i2c_num, 32, 0x0);
-        // write_reg(i2c_num, 33, 0x0);
-        // write_reg(i2c_num, 34, 0x0);
+        // write_reg(i2c_num, WM8758B_ALC_CTRL_1, 0x0);
+        // write_reg(i2c_num, WM8758B_ALC_CTRL_2, 0x0);
+        // write_reg(i2c_num, WM8758B_ALC_CTRL_3, 0x0);
 
         // mic bypass path (for debugging mic input)
-        // write_reg(i2c_num, 43, (1 << 8) | (1 << 7));
+        // write_reg(i2c_num, WM8758B_BEEP_CTRL, (1 << 8) | (1 << 7));
 
         // l/r adc digital volume
-        wm8758_write_reg(15, 0x1ff);
-        wm8758_write_reg(16, 0x1ff);
+        wm8758_write_reg(WM8758B_LEFT_ADC_DIGITAL_VOL, 0x1ff);
+        wm8758_write_reg(WM8758B_RIGHT_ADC_DIGITAL_VOL, 0x1ff);
 
         // input PGA volume
-        // write_reg(i2c_num, 44, 0x22); // loud metallic static if 0
-        // write_reg(i2c_num, 45, 0x11f); // gain adjustment audible in the bypass path too
-        // write_reg(i2c_num, 46, 0x11f);
-        wm8758_write_reg(44, 0x12); // loud metallic static if 0
-        wm8758_write_reg(45, 0x3f);
-        wm8758_write_reg(46, 0x3f);
+        // write_reg(i2c_num, WM8758B_INPUT_CTRL, 0x22); // loud metallic static if 0
+        // write_reg(i2c_num, WM8758B_LEFT_INP_PGA_GAIN_CTRL, 0x11f); // gain adjustment audible in the bypass path too
+        // write_reg(i2c_num, WM8758B_RIGHT_INP_PGA_GAIN_CTRL, 0x11f);
+        wm8758_write_reg(WM8758B_INPUT_CTRL, 0x12); // loud metallic static if 0
+        wm8758_write_reg(WM8758B_LEFT_INP_PGA_GAIN_CTRL, 0x3f);
+        wm8758_write_reg(WM8758B_RIGHT_INP_PGA_GAIN_CTRL, 0x3f);
 
         // input boost ctrl. does not seem audible in the bypass path
         const int pga_boost_enable = 1;
-        wm8758_write_reg(47, (pga_boost_enable << 8));
-        wm8758_write_reg(48, (pga_boost_enable << 8));
+        wm8758_write_reg(WM8758B_LEFT_ADC_BOOST_CTRL, (pga_boost_enable << 8));
+        wm8758_write_reg(WM8758B_RIGHT_ADC_BOOST_CTRL, (pga_boost_enable << 8));
 
         // LOUT1VOL/ROUT1VOL
-        wm8758_write_reg(52, (1 << 8) | 0x39);
-        wm8758_write_reg(53, (1 << 8) | 0x39);
+        wm8758_write_reg(WM8758B_LOUT1, (1 << 8) | 0x39);
+        wm8758_write_reg(WM8758B_ROUT1, (1 << 8) | 0x39);
 
         // mic bypass path (for debugging mic input)
-        // wm8758_write_reg(43, (1 << 8) | (1 << 7));
+        // wm8758_write_reg(WM8758B_BEEP_CTRL, (1 << 8) | (1 << 7));
     }
     else
     {

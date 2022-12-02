@@ -1,5 +1,5 @@
 [package]
-name = "rust-lib-2"
+name = "rust-looper"
 version = "0.1.0"
 edition = "2021"
 

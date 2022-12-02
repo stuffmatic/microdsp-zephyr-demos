@@ -1,4 +1,4 @@
-#include "i2s_nrfx.h"
+#include "i2s.h"
 #include <zephyr.h>
 #include <zephyr/kernel/thread.h>
 
@@ -59,9 +59,10 @@ uint32_t processing_sem_give_time = 0;
 static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
     while (true) {
         if (k_sem_take(&processing_thread_semaphore, K_FOREVER) == 0) {
-            audio_processing_options_t* processing_options = (audio_processing_options_t*)p1;
+            audio_callbacks_t* audio_callbacks = (audio_callbacks_t*)p1;
             if (atomic_test_bit(&dropout_occurred, 0)) {
-                processing_options->dropout_cb(processing_options);
+                audio_callbacks->dropout_cb(audio_callbacks->cb_data);
+                atomic_clear_bit(&dropout_occurred, 0);
             }
             uint32_t processing_sem_take_time = k_cycle_get_32();
             uint32_t cycles_spent = processing_sem_take_time - processing_sem_give_time;
@@ -80,12 +81,12 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
 
             // Convert incoming audio from PCM
             for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
-                scratch_buffer_in[i] = rx[i] / 8388607.0;
+                scratch_buffer_in[i] = rx[i] / (float)8388607.0;
             }
 
             memset(scratch_buffer_out, 0, AUDIO_BUFFER_N_SAMPLES * sizeof(float));
-            processing_options->processing_cb(
-                processing_options->processing_cb_data,
+            audio_callbacks->processing_cb(
+                audio_callbacks->cb_data,
                 AUDIO_BUFFER_N_FRAMES,
                 AUDIO_BUFFER_N_CHANNELS,
                 scratch_buffer_out,
@@ -94,7 +95,7 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
 
             // Convert outgoing audio to PCM
             for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
-                tx[i] = scratch_buffer_out[i] * 8388607.0; // TODO: saturated?
+                tx[i] = scratch_buffer_out[i] * 8388607.0f; // TODO: saturated?
             }
 
             nrfx_i2s_buffers_t* buffers_to_set = processing_buffers_1 ? &nrfx_i2s_buffers_2 : &nrfx_i2s_buffers_1;
@@ -110,28 +111,6 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
         }
     }
 }
-
-const uint8_t lrck_pin = 29; // 29; // P0.29 7 aka word select
-const uint8_t sdout_pin = 30; // 30; // P0.30 25
-const uint8_t sck_pin = 4;  // 31; // aka bitcklock P0.31 26
-const uint8_t mck_pin = NRFX_I2S_PIN_NOT_USED; // 31;   // 27; // NRFX_I2S_PIN_NOT_USED;
-const uint8_t sdin_pin = 28; // NRFX_I2S_PIN_NOT_USED; // 6; // NRFX_I2S_PIN_NOT_USED;
-
-nrfx_i2s_config_t nrfx_i2s_cfg = {
-    .sck_pin = sck_pin,
-    .lrck_pin = lrck_pin,
-    .mck_pin = mck_pin,
-    .sdout_pin = sdout_pin,
-    .sdin_pin = sdin_pin,
-    .irq_priority = NRFX_I2S_DEFAULT_CONFIG_IRQ_PRIORITY,
-    .mode = NRF_I2S_MODE_MASTER,
-    .format = NRF_I2S_FORMAT_I2S,
-    .alignment = NRF_I2S_ALIGN_LEFT,
-    .channels = NRF_I2S_CHANNELS_STEREO,
-    .sample_width = NRF_I2S_SWIDTH_24BIT,
-    .mck_setup = NRF_I2S_MCK_32MDIV15,
-    .ratio = NRF_I2S_RATIO_48X,
-};
 
 ISR_DIRECT_DECLARE(i2s_isr_handler)
 {
@@ -159,7 +138,7 @@ void nrfx_i2s_data_handler(nrfx_i2s_buffers_t const *p_released, uint32_t status
     }
 }
 
-nrfx_err_t i2s_start(audio_processing_options_t* processing_options)
+nrfx_err_t i2s_start(audio_cfg_t* audio_cfg, audio_callbacks_t* audio_callbacks)
 {
     // Start a dedicated, high priority thread for audio processing.
     k_tid_t processing_thread_tid = k_thread_create(
@@ -167,13 +146,29 @@ nrfx_err_t i2s_start(audio_processing_options_t* processing_options)
         processing_thread_stack_area,
         K_THREAD_STACK_SIZEOF(processing_thread_stack_area),
         processing_thread_entry_point,
-        processing_options, NULL, NULL,
+        audio_callbacks, NULL, NULL,
         PROCESSING_THREAD_PRIORITY, 0, K_NO_WAIT
     );
 
-    IRQ_DIRECT_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_I2S), 0, i2s_isr_handler, 0);
-
     // Init and start I2S
+    IRQ_DIRECT_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_I2S0), 0, i2s_isr_handler, 0);
+
+    nrfx_i2s_config_t nrfx_i2s_cfg = {
+        .sck_pin = audio_cfg->sck_pin,
+        .lrck_pin = audio_cfg->lrck_pin,
+        .mck_pin = audio_cfg->mck_pin,
+        .sdout_pin = audio_cfg->sdout_pin,
+        .sdin_pin = audio_cfg->sdin_pin,
+        .mck_setup = audio_cfg->mck_setup,
+        .ratio = audio_cfg->ratio,
+        .irq_priority = NRFX_I2S_DEFAULT_CONFIG_IRQ_PRIORITY,
+        .mode = NRF_I2S_MODE_MASTER,
+        .format = NRF_I2S_FORMAT_I2S,
+        .alignment = NRF_I2S_ALIGN_LEFT,
+        .channels = NRF_I2S_CHANNELS_STEREO,
+        .sample_width = NRF_I2S_SWIDTH_24BIT
+    };
+
     nrfx_err_t result = nrfx_i2s_init(&nrfx_i2s_cfg, &nrfx_i2s_data_handler);
     if (result != NRFX_SUCCESS) {
         printk("nrfx_i2s_init failed with result %d", result);
