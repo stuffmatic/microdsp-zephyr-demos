@@ -1,7 +1,11 @@
 #include <zephyr/drivers/i2c.h>
 #include "wm8904.h"
 
+#ifdef CONFIG_SOC_SERIES_NRF53X
+#define I2C_NODE DT_NODELABEL(i2c1)
+#else
 #define I2C_NODE DT_NODELABEL(i2c0)
+#endif
 static const struct device *i2c_dev = DEVICE_DT_GET(I2C_NODE);
 
 int wm8904_read_reg(uint8_t reg_addr, uint16_t* result)

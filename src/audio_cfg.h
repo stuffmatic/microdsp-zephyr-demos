@@ -36,13 +36,13 @@ static void init_codec() {
 #ifdef CONFIG_SOC_SERIES_NRF53X
 static audio_cfg_t audio_cfg = {
     .init_codec = init_codec,
-    .sample_rate = 0,
+    .sample_rate = 41666.6666,
 
-    .sck_pin = 0,
-    .lrck_pin = 0,
-    .sdin_pin = 0,
-    .sdout_pin = 0,
-    .mck_pin = 0,
+    .sck_pin = 25,
+    .lrck_pin = 7,
+    .sdin_pin = 6,
+    .sdout_pin = 5,
+    .mck_pin = 26,
 
     .mck_setup = NRF_I2S_MCK_32MDIV8,
     .ratio = NRF_I2S_RATIO_96X
@@ -50,7 +50,6 @@ static audio_cfg_t audio_cfg = {
 #endif
 
 #ifdef CONFIG_SOC_SERIES_NRF52X
-
 static audio_cfg_t audio_cfg = {
     .init_codec = init_codec,
     .sample_rate = 44444.444,
