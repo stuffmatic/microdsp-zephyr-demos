@@ -11,24 +11,24 @@ typedef struct
     float dphase;
 } oscillator_state_t;
 
-#define OSC_FREQ_HZ 350.0
-#define OSC_GAIN ((float)0.01)
+#define OSC_FREQ_HZ 350.0f
+#define OSC_GAIN 0.01f
 static void processing_cb(void *cb_data, uint32_t frame_count, uint32_t channel_count, float *tx, const float *rx)
 {
     oscillator_state_t *osc_state = (oscillator_state_t *)cb_data;
     for (int i = 0; i < frame_count; i++)
     {
-        float x = osc_state->phase > 1 ? osc_state->phase - 2 : osc_state->phase;
-        float sign = osc_state->phase > 1 ? -1 : 1;
+        float x = osc_state->phase > 1.0f ? osc_state->phase - 2 : osc_state->phase;
+        float sign = osc_state->phase > 1.0f ? -1.0f : 1.0f;
 
         float x_sq = x * x;
         float x_qu = x_sq * x_sq;
-        float value = ((float)0.2146) * x_qu - 1.214601836f * x_sq + 1.0f;
+        float value = 0.2146f * x_qu - 1.214601836f * x_sq + 1.0f;
 
         osc_state->phase += osc_state->dphase;
 
-        if (osc_state->phase > 3.0) {
-            osc_state->phase -= 4.;
+        if (osc_state->phase > 3.0f) {
+            osc_state->phase -= 4.f;
         }
 
         tx[channel_count * i] = OSC_GAIN * value * sign;
@@ -55,7 +55,7 @@ static oscillator_state_t oscillator_state = {
 
 void main(void)
 {
-    oscillator_state.dphase = 4 * OSC_FREQ_HZ / audio_cfg.sample_rate;
+    oscillator_state.dphase = 4.0f * OSC_FREQ_HZ / audio_cfg.sample_rate;
     audio_cfg.init_codec();
 
     audio_callbacks_t audio_callbacks = {

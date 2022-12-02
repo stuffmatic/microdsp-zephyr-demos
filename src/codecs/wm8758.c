@@ -30,7 +30,7 @@ int wm8758_write_reg(uint16_t reg_addr, uint16_t data)
     return write_rc;
 }
 
-void init_wm8758()
+void wm8758_init()
 {
     if (device_is_ready(i2c_dev))
     {

@@ -19,3 +19,4 @@
 * build into build dir
 * multiple definitions error disabled not caught
 * test multiple crate deps
+* how to detect FPU?
