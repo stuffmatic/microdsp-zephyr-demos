@@ -3,8 +3,7 @@
 
 typedef void (*audio_processing_callback_t)(
   void* cb_data,
-  unsigned int frame_count,
-  unsigned int channel_count,
+  unsigned int sample_count,
   float* tx,
   const float* rx
 );

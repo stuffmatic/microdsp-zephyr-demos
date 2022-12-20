@@ -12,9 +12,9 @@
 #define AUDIO_BUFFER_BYTE_SIZE (BYTES_PER_SAMPLE * AUDIO_BUFFER_N_SAMPLES)
 #define AUDIO_BUFFER_WORD_SIZE (AUDIO_BUFFER_BYTE_SIZE / 4)
 
-// Floating point scratch buffers.
-static float scratch_buffer_out[AUDIO_BUFFER_N_SAMPLES];
-static float scratch_buffer_in[AUDIO_BUFFER_N_SAMPLES];
+// Floating point mono scratch buffers.
+static float scratch_buffer_out[AUDIO_BUFFER_N_FRAMES];
+static float scratch_buffer_in[AUDIO_BUFFER_N_FRAMES];
 
 // Use two pairs of rx/tx buffers for double buffering,
 // i.e process/render one pair of buffers while the other is
@@ -79,26 +79,26 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
             int32_t *tx = (int32_t *)buffers_to_process->p_tx_buffer;
             int32_t *rx = (int32_t *)buffers_to_process->p_rx_buffer;
 
-            // Convert incoming audio from PCM
-            for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
-                scratch_buffer_in[i] = rx[i] / (float)8388607.0;
+            // Convert incoming audio from PCM, discarding right channel
+            for (int i = 0; i < AUDIO_BUFFER_N_FRAMES; i++) {
+                scratch_buffer_in[i] = rx[2 * i] / (float)8388607.0;
             }
 
-            memset(scratch_buffer_out, 0, AUDIO_BUFFER_N_SAMPLES * sizeof(float));
+            memset(scratch_buffer_out, 0, AUDIO_BUFFER_N_FRAMES * sizeof(float));
             audio_callbacks->processing_cb(
                 audio_callbacks->cb_data,
                 AUDIO_BUFFER_N_FRAMES,
-                AUDIO_BUFFER_N_CHANNELS,
                 scratch_buffer_out,
                 scratch_buffer_in
             );
 
             // Convert outgoing audio to PCM
-            for (int i = 0; i < AUDIO_BUFFER_N_SAMPLES; i++) {
-                tx[i] = scratch_buffer_out[i] * 8388607.0f; // TODO: saturated?
+            for (int i = 0; i < AUDIO_BUFFER_N_FRAMES; i++) {
+                float out_val = scratch_buffer_out[i] * 8388607.0f;
+                tx[2 * i] = out_val;
+                tx[2 * i + 1] = out_val;
             }
 
-            nrfx_i2s_buffers_t* buffers_to_set = processing_buffers_1 ? &nrfx_i2s_buffers_2 : &nrfx_i2s_buffers_1;
             nrfx_err_t result = nrfx_i2s_next_buffers_set(buffers_to_process);
             if (result != NRFX_SUCCESS) {
                 printk("nrfx_i2s_next_buffers_set failed with %d\n", result);
@@ -173,13 +173,15 @@ nrfx_err_t i2s_start(audio_cfg_t* audio_cfg, audio_callbacks_t* audio_callbacks)
     if (result != NRFX_SUCCESS) {
         printk("nrfx_i2s_init failed with result %d", result);
         __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_init failed with result %d", result);
+        return result;
     }
 
     result = nrfx_i2s_start(&nrfx_i2s_buffers_1, AUDIO_BUFFER_WORD_SIZE, 0);
     if (result != NRFX_SUCCESS) {
         printk("nrfx_i2s_start failed with result %d", result);
         __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_start failed with result %d", result);
+        return result;
     }
 
-    return NRFX_SUCCESS; // TODO: return proper result
+    return NRFX_SUCCESS;
 }

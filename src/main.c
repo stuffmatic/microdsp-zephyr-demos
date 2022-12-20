@@ -1,38 +1,66 @@
 #include <zephyr/zephyr.h>
 #include <zephyr/drivers/gpio.h>
+#include <sys/ring_buffer.h>
+#include <microdsp_demo/microdsp_demo.h>
+#include <stdlib.h>
 
 #include "audio_callbacks.h"
 #include "audio_cfg.h"
+#include "buttons.h"
 #include "i2s.h"
-
-typedef struct
-{
-    float phase;
-    float dphase;
-} oscillator_state_t;
+#include "leds.h"
 
 #define OSC_FREQ_HZ 350.0f
 #define OSC_GAIN 0.01f
-static void processing_cb(void *cb_data, uint32_t frame_count, uint32_t channel_count, float *tx, const float *rx)
+static float phase_debug = 0;
+static float dphase_debug = 0;
+
+#define APP_MSG_BUFFER_SIZE 64
+typedef struct
 {
-    oscillator_state_t *osc_state = (oscillator_state_t *)cb_data;
-    for (int i = 0; i < frame_count; i++)
+    void *rust_app_ptr;
+    uint8_t msg_rx_buffer[APP_MSG_BUFFER_SIZE];
+    uint8_t msg_tx_buffer[APP_MSG_BUFFER_SIZE];
+    struct ring_buf msg_rx;
+    struct ring_buf msg_tx;
+} demo_app_t;
+
+static demo_app_t demo_app;
+
+static void processing_cb(void *cb_data, uint32_t sample_count, float *tx, const float *rx)
+{
+    demo_app_t *demo_app = (demo_app_t *)cb_data;
+    uint8_t command = 0;
+    while (ring_buf_get(&demo_app->msg_rx, &command, 1) > 0)
     {
-        float x = osc_state->phase > 1.0f ? osc_state->phase - 2 : osc_state->phase;
-        float sign = osc_state->phase > 1.0f ? -1.0f : 1.0f;
+        demo_app_handle_message(demo_app->rust_app_ptr, command);
+    }
 
-        float x_sq = x * x;
-        float x_qu = x_sq * x_sq;
-        float value = 0.2146f * x_qu - 1.214601836f * x_sq + 1.0f;
+    if (false)
+    {
+        demo_app_process(demo_app->rust_app_ptr, tx, rx, sample_count);
+    }
+    else
+    {
+        for (int i = 0; i < sample_count; i++)
+        {
+            float x = phase_debug > 1.0f ? phase_debug - 2 : phase_debug;
+            float sign = phase_debug > 1.0f ? -1.0f : 1.0f;
 
-        osc_state->phase += osc_state->dphase;
+            float x_sq = x * x;
+            float x_qu = x_sq * x_sq;
+            float value = 0.2146f * x_qu - 1.214601836f * x_sq + 1.0f;
 
-        if (osc_state->phase > 3.0f) {
-            osc_state->phase -= 4.f;
+            phase_debug += dphase_debug;
+
+            if (phase_debug > 3.0f)
+            {
+                phase_debug -= 4.f;
+            }
+            float out_sample = OSC_GAIN * value * sign;
+            tx[2 * i] = out_sample;
+            tx[2 * i + 1] = out_sample;
         }
-
-        tx[channel_count * i] = OSC_GAIN * value * sign;
-        tx[channel_count * i + 1] = OSC_GAIN * value * sign;
     }
 }
 
@@ -41,33 +69,88 @@ static void dropout_cb(void *data)
     printk("dropout!\n");
 }
 
-static oscillator_state_t oscillator_state = {
-    .phase = -1,
-    .dphase = 0
-};
+#define POLL_INTERVAL_MS 10
 
-#define SLEEP_TIME_MS 1000
+void button_callback(int btn_idx, int is_down) {
+    uint8_t msg = 0;
 
-/* The devicetree node identifier for the "led0" alias. */
-// #define LED0_NODE DT_ALIAS(led0)
+    switch (btn_idx) {
+        case 0:
+            msg = is_down ? Button0Down : Button0Up;
+            break;
+        case 1:
+            msg = is_down ? Button1Down : Button1Up;
+            break;
+        case 2:
+            msg = is_down ? Button2Down : Button2Up;
+            break;
+        case 3:
+            msg = is_down ? Button3Down : Button3Up;
+            break;
+    }
 
-// static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
+    if (msg) {
+        ring_buf_put(&demo_app.msg_tx, &msg, 1);
+    }
+}
 
 void main(void)
 {
-    oscillator_state.dphase = 4.0f * OSC_FREQ_HZ / audio_cfg.sample_rate;
+    void* test_alloc = malloc(1);
+    // init_leds();
+    // init_buttons(&button_callback);
+    demo_app.rust_app_ptr = demo_app_create(audio_cfg.sample_rate);
+    dphase_debug = 4.00001f * OSC_FREQ_HZ / audio_cfg.sample_rate;
+    ring_buf_init(&demo_app.msg_rx, ARRAY_SIZE(demo_app.msg_rx_buffer), demo_app.msg_rx_buffer);
+    ring_buf_init(&demo_app.msg_tx, ARRAY_SIZE(demo_app.msg_tx_buffer), demo_app.msg_tx_buffer);
     audio_cfg.init_codec();
 
     audio_callbacks_t audio_callbacks = {
         .dropout_cb = dropout_cb,
         .processing_cb = processing_cb,
-        .cb_data = &oscillator_state,
+        .cb_data = &demo_app,
     };
 
     i2s_start(&audio_cfg, &audio_callbacks);
 
     while (1)
     {
-        k_msleep(SLEEP_TIME_MS);
+        // uint8_t command = COMMAND_PLAY;
+        // ring_buf_put(&oscillator_state.commands_rx, &command, 1);
+        // printk("sent COMMAND_PLAY\n");
+        uint8_t command = 0;
+        while (ring_buf_get(&demo_app.msg_rx, &command, 1) > 0)
+        {
+            switch (command)
+            {
+            case Led0On:
+                set_led_state(0, 1);
+                break;
+            case Led0Off:
+                set_led_state(0, 0);
+                break;
+            case Led1On:
+                set_led_state(1, 1);
+                break;
+            case Led1Off:
+                set_led_state(1, 0);
+                break;
+            case Led2On:
+                set_led_state(2, 1);
+                break;
+            case Led2Off:
+                set_led_state(2, 0);
+                break;
+            case Led3On:
+                set_led_state(3, 1);
+                break;
+            case Led3Off:
+                set_led_state(3, 0);
+                break;
+            default:
+                break;
+            }
+        }
+        k_msleep(POLL_INTERVAL_MS);
     }
 }

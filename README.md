@@ -2,13 +2,14 @@
 
 # Zephyr rust audio demo
 
-Result of research.
+Result of research. One step beyond a simple hello world.
 Part note to self, part boilerplate. May help someone looking to get into embedded sound.
 
 This is a Zephyr demo app demonstrating
 
-* how to do real time audio processing using I2S and an external audio codec
+* how to do real time, full duplex audio processing using I2S and an external audio codec
 * how use rust crates in a Zephyr app
+* how to use the same rust lib in apps for web, desktop and embedded
 
 The app was built with nRF Connect SDK v2.1.2 and has been tested with the following boards:
 
@@ -27,7 +28,8 @@ Codecs not requiring drivers, like [BLA]
 
 ## Using rust crates in Zephyr
 
-* install target. `Could not find specification for target "thumbv8m.main-none-eabih"`. https://rust-lang.github.io/rustup/cross-compilation.html.  
+* install target. `Could not find specification for target "thumbv8m.main-none-eabih"`. https://rust-lang.github.io/rustup/cross-compilation.html.
+* disassemble + rustfilt
 
 ### Rust lib from C
 
