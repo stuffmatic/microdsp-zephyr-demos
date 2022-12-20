@@ -5,9 +5,10 @@
 
 extern crate alloc;
 mod c_allocator;
-// mod looper;
+mod looper;
 use alloc::{alloc::alloc, boxed::Box, slice, vec};
 use c_allocator::CAllocator;
+use looper::Looper;
 use core::{alloc::Layout, panic::PanicInfo};
 // use looper::Looper;
 
@@ -19,14 +20,13 @@ fn panic(_panic: &PanicInfo<'_>) -> ! {
     loop {}
 }
 
-/* #[no_mangle]
+#[no_mangle]
 pub extern "C" fn create_looper() -> *mut Looper {
     unsafe {
-        let layout = Layout::new::<Looper>();
-        alloc(layout) as *mut Looper
+        unsafe { core::mem::transmute(Box::new(Looper::new())) }
     }
 }
-
+/*
 #[no_mangle]
 pub fn looper_process(
     looper_ptr: *mut Looper,

@@ -18,7 +18,7 @@ pub struct Looper {
 }
 
 // About a second @44.1kHz
-const BUFFER_SIZE: usize = 50_000;
+const BUFFER_SIZE: usize = 100;
 
 impl Looper {
     pub fn new() -> Self {

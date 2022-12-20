@@ -1,5 +1,6 @@
 #include <zephyr/zephyr.h>
 #include <zephyr/drivers/gpio.h>
+#include <rust_looper/rust_looper.h>>
 
 #include "audio_callbacks.h"
 #include "audio_cfg.h"
@@ -55,6 +56,7 @@ static oscillator_state_t oscillator_state = {
 
 void main(void)
 {
+    void* looper = create_looper();
     oscillator_state.dphase = 4.0f * OSC_FREQ_HZ / audio_cfg.sample_rate;
     audio_cfg.init_codec();
 
