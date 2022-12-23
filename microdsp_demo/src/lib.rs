@@ -24,6 +24,7 @@ mod mpm_demo;
 mod nlms_demo;
 mod sfnov_demo;
 
+use alloc::{vec::{self, Vec}, boxed::Box};
 pub use mpm_demo::MpmDemoApp;
 pub use nlms_demo::NlmsDemoApp;
 pub use sfnov_demo::SfnovDemoApp;
@@ -32,7 +33,7 @@ extern crate alloc;
 mod c_allocator;
 use c_allocator::CAllocator;
 
-mod c_api;
+pub mod c_api;
 
 #[repr(u8)]
 #[derive(Clone, Copy)]

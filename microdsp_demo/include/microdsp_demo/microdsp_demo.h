@@ -31,6 +31,6 @@ void demo_app_process(
 );
 
 void demo_app_handle_message(void* demo_app_ptr, app_message_t message);
-app_message_t demo_app_pump_message(void* demo_app_ptr);
+app_message_t demo_app_next_outgoing_message(void* demo_app_ptr);
 
 #endif

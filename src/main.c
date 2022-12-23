@@ -36,7 +36,7 @@ static void processing_cb(void *cb_data, uint32_t sample_count, float *tx, const
         demo_app_handle_message(demo_app->rust_app_ptr, command);
     }
 
-    if (false)
+    if (true)
     {
         demo_app_process(demo_app->rust_app_ptr, tx, rx, sample_count);
     }
@@ -58,8 +58,7 @@ static void processing_cb(void *cb_data, uint32_t sample_count, float *tx, const
                 phase_debug -= 4.f;
             }
             float out_sample = OSC_GAIN * value * sign;
-            tx[2 * i] = out_sample;
-            tx[2 * i + 1] = out_sample;
+            tx[i] = out_sample;
         }
     }
 }
@@ -96,11 +95,12 @@ void button_callback(int btn_idx, int is_down) {
 
 void main(void)
 {
-    void* test_alloc = malloc(1);
     // init_leds();
     // init_buttons(&button_callback);
+    printk("before demo_app_create\n");
     demo_app.rust_app_ptr = demo_app_create(audio_cfg.sample_rate);
-    dphase_debug = 4.00001f * OSC_FREQ_HZ / audio_cfg.sample_rate;
+    printk("after demo_app_create\n");
+    dphase_debug = 4.0f * OSC_FREQ_HZ / audio_cfg.sample_rate;
     ring_buf_init(&demo_app.msg_rx, ARRAY_SIZE(demo_app.msg_rx_buffer), demo_app.msg_rx_buffer);
     ring_buf_init(&demo_app.msg_tx, ARRAY_SIZE(demo_app.msg_tx_buffer), demo_app.msg_tx_buffer);
     audio_cfg.init_codec();

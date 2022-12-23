@@ -148,15 +148,23 @@ void wm8904_init()
         k_msleep(100);
 
         // mic test, left channel
-        if (false)
+        if (true)
         {
-            // unmute, full vol
+            // unmute, full gain
             wm8904_write_reg(WM8904_ANALOGUE_LEFT_INPUT_0, 0b11111);
+            wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_1, 0b11111);
+            // set digital volume
+            wm8904_write_reg(WM8904_ADC_DIGITAL_VOLUME_LEFT, 0b11000000);
+            wm8904_write_reg(WM8904_ADC_DIGITAL_VOLUME_RIGHT, 0b11000000);
             // wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_0, 0b11111);
-            wm8904_write_reg(WM8904_ANALOGUE_LEFT_INPUT_1, 0b0010000);
+            wm8904_write_reg(WM8904_ANALOGUE_LEFT_INPUT_1, 0b0010100);
+            wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_1, 0b0010100);
 
             // mic bypass
-            wm8904_write_reg(WM8904_ANALOGUE_OUT12_ZC, 0b1111);
+            // wm8904_write_reg(WM8904_ANALOGUE_OUT12_ZC, 0b1111);
+
+            // digital loopback
+            // wm8904_write_reg(WM8904_AUDIO_INTERFACE_0, 0b101010000);
         }
 
         // sysclk src = pll, enable sys clk, enable dsp clk

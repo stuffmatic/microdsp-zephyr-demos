@@ -9,6 +9,12 @@ crate-type = ["staticlib"]
 [profile.release]
 # lto = true
 
+# microdsp compiled in default debug mode seems to
+# take up a lot of stack space causing stack overflows.
+# https://docs.rust-embedded.org/book/unsorted/speed-vs-size.html
+[profile.dev.package.microdsp]
+opt-level = 3
+
 [dependencies]
 microdsp = { path = "../../../rust-audio/microdsp" }
 micromath = "2.0.0"

@@ -56,8 +56,8 @@ static audio_cfg_t audio_cfg = {
 
     .sck_pin = 30,
     .lrck_pin = 29,
-    .sdin_pin = 28,
-    .sdout_pin = 4,
+    .sdin_pin = 4,
+    .sdout_pin = 28,
     .mck_pin = 31,
 
     .mck_setup = NRF_I2S_MCK_32MDIV15,

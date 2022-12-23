@@ -4,9 +4,7 @@ use core::mem::transmute;
 
 #[no_mangle]
 pub extern "C" fn demo_app_create(sample_rate: f32) -> *mut DemoAppType {
-    let vec: Vec<f32> = vec![0.0; 10];
-    let app = DemoAppType::new(sample_rate);
-    unsafe { transmute(Box::new(app)) }
+    unsafe { transmute(Box::new(DemoAppType::new(sample_rate))) }
 }
 
 #[no_mangle]

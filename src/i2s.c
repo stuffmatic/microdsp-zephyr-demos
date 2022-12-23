@@ -18,7 +18,7 @@ static float scratch_buffer_in[AUDIO_BUFFER_N_FRAMES];
 
 // Use two pairs of rx/tx buffers for double buffering,
 // i.e process/render one pair of buffers while the other is
-// being transfered.
+// being received/transfered.
 static int32_t __attribute__((aligned(4))) rx_1[AUDIO_BUFFER_N_SAMPLES];
 static int32_t __attribute__((aligned(4))) tx_1[AUDIO_BUFFER_N_SAMPLES];
 static int32_t __attribute__((aligned(4))) rx_2[AUDIO_BUFFER_N_SAMPLES];

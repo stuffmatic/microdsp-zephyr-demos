@@ -3,8 +3,8 @@ use core::alloc::{GlobalAlloc, Layout};
 pub struct CAllocator;
 
 extern "C" {
-    fn malloc(size: usize) -> *mut u8;
-    fn free(ptr: *mut u8);
+    pub fn malloc(size: usize) -> *mut u8;
+    pub fn free(ptr: *mut u8);
 }
 
 #[no_mangle]
