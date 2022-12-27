@@ -6,12 +6,13 @@ project(rust_audio_demo)
 
 target_sources(app PRIVATE src/main.c src/i2s.c src/leds.c src/buttons.c src/codecs/wm8758.c src/codecs/wm8904.c)
 
-# Import the add_rust_library function
-include(AddRustLibrary.cmake)
-# Add rust-lib crate dependency.
-# ${CMAKE_CURRENT_SOURCE_DIR} is the directory containing CMakeLists.txt.
-add_rust_library(
-  microdsp-demo # Crate name as specified in Cargo.toml
-  ${CMAKE_CURRENT_SOURCE_DIR}/microdsp_demo # Crate root dir
-  ${CMAKE_CURRENT_SOURCE_DIR}/microdsp_demo/include # C header dir
+# Import the zephyr_add_rust_library function
+include(zephyr_add_rust_library.cmake)
+
+# Add microdsp-demo crate dependency.
+zephyr_add_rust_library(
+  CRATE_NAME microdsp-demo # Crate name as specified in Cargo.toml
+  CRATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/microdsp_demo # Crate root dir
+  CRATE_HEADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/microdsp_demo/include # C header dir
+  EXTRA_CARGO_ARGS --no-default-features --features mpm_demo # Select demo to build
 )
