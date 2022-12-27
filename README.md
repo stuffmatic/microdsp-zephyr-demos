@@ -1,16 +1,16 @@
 # microdsp Zephyr demos 
 
-This is a [Zephyr](https://zephyrproject.org/) ([nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/index.html])) app showing how to do real time, full duplex audio processing on a microcontroller using the [microdsp](https://github.com/stuffmatic/microdsp) Rust library and an external audio codec. The app has been tested with nRF Connect SDK v2.1.2 and the following boards:
+This is a [Zephyr](https://zephyrproject.org/) ([nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/index.html])) app showing how to do real time, full duplex audio processing on a microcontroller using the [microdsp](https://github.com/stuffmatic/microdsp) Rust library and an external audio codec. The app has been tested with nRF Connect SDK v2.1.2 and the following boards
 
 * [nRF52840 DK](https://www.nordicsemi.com/Products/Development-hardware/nRF52840-DK)
 * [nRF5340 DK](https://www.nordicsemi.com/Products/Development-hardware/nRF5340-DK)
 
-Rudimentary drivers are available for the following audio codecs:
+Rudimentary drivers are available for the following audio codecs
 
 * [WM8758b](datasheets/1811051126_Cirrus-Logic-WM8758CBGEFL-RV_C323840.pdf) (not compatible with nRF52840 DK due to clocking limitations)
 * [WM8940](datasheets/1912111437_Cirrus-Logic-WM8904CGEFL-RV_C323845.pdf)
 
-The demos in the videos below are run on an nRF52840 DK with breakout boards for
+The demos in the videos below run on an nRF52840 DK with breakout boards for
 
 * a WM8940 audio codec 
 * an analog MEMS microphone
