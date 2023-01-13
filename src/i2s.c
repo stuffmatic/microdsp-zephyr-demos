@@ -75,14 +75,35 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
             }
 
             nrfx_i2s_buffers_t* buffers_to_process = processing_buffers_1 ? &nrfx_i2s_buffers_1 : &nrfx_i2s_buffers_2;
-            // TODO: not always int32_t
             int32_t *tx = (int32_t *)buffers_to_process->p_tx_buffer;
             int32_t *rx = (int32_t *)buffers_to_process->p_rx_buffer;
 
             // Convert incoming audio from PCM, discarding right channel
+            int32_t rx_min = 0;
+            int32_t rx_max = 0;
+            float max_sq = 0.0;
             for (int i = 0; i < AUDIO_BUFFER_N_FRAMES; i++) {
-                scratch_buffer_in[i] = rx[2 * i] / (float)8388607.0;
+                int32_t rx_l = rx[2 * i];
+                int32_t rx_r = rx[2 * i + 1];
+                if (rx_l < rx_min) {
+                    rx_min = rx_l;
+                }
+                if (rx_r < rx_min) {
+                    rx_min = rx_r;
+                }
+                if (rx_l > rx_max) {
+                    rx_max = rx_l;
+                }
+                if (rx_r > rx_max) {
+                    rx_max = rx_r;
+                }
+                float val_f = rx_l / (float)8388607.0;
+                if (val_f * val_f > max_sq) {
+                    max_sq = val_f * val_f;
+                }
+                scratch_buffer_in[i] = val_f;
             }
+            // printk("rx_min %d, rx_max %d, max_sq %f\n", rx_min, rx_max, max_sq);
 
             memset(scratch_buffer_out, 0, AUDIO_BUFFER_N_FRAMES * sizeof(float));
             audio_callbacks->processing_cb(
@@ -94,7 +115,7 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
 
             // Convert outgoing audio to PCM
             for (int i = 0; i < AUDIO_BUFFER_N_FRAMES; i++) {
-                float out_val = scratch_buffer_out[i] * 8388607.0f;
+                int32_t out_val = scratch_buffer_out[i] * 8388607.0f;
                 tx[2 * i] = out_val;
                 tx[2 * i + 1] = out_val;
             }
@@ -164,7 +185,7 @@ nrfx_err_t i2s_start(audio_cfg_t* audio_cfg, audio_callbacks_t* audio_callbacks)
         .irq_priority = NRFX_I2S_DEFAULT_CONFIG_IRQ_PRIORITY,
         .mode = NRF_I2S_MODE_MASTER,
         .format = NRF_I2S_FORMAT_I2S,
-        .alignment = NRF_I2S_ALIGN_LEFT,
+        .alignment = NRF_I2S_ALIGN_LEFT, // only applies to input. output is always left aligned per https://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.nrf52832.ps.v1.1%2Fi2s.html
         .channels = NRF_I2S_CHANNELS_STEREO,
         .sample_width = NRF_I2S_SWIDTH_24BIT
     };

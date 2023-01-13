@@ -4,7 +4,7 @@
 NRF_I2S_MCK_32MDIV = 15
 NRF_I2S_RATIO = 48
 n_channels = 2 # stereo
-bits_per_sample = 32 # 24 bit samples are transfered as 32 bit words
+bits_per_sample = 24
 
 mclk = 32_000_000 / NRF_I2S_MCK_32MDIV # master clock frequency
 fs = mclk / NRF_I2S_RATIO # sample rate
@@ -14,6 +14,7 @@ print("    NRF_I2S_MCK_32MDIV_" + str(NRF_I2S_MCK_32MDIV))
 print("    NRF_I2S_RATIO_" + str(NRF_I2S_RATIO))
 print("    MCLK " + str(mclk) + " Hz")
 print("    SCLK " + str(sclk) + " Hz")
+print("    fs   " + str(fs) + " Hz")
 print("")
 
 ##########################
@@ -26,7 +27,7 @@ f_ref = sclk
 FLL_RATIO = 1 # recommended for FREF > 1MHz
 
 #
-NK = 32.0
+NK = 42.666666666666666
 FLL_OUT_DIV = 8 #  4 <= FLL_OUT_DIV <= 64
 
 f_vco = f_ref * NK * FLL_RATIO

@@ -11,7 +11,7 @@
 #include "leds.h"
 
 #define OSC_FREQ_HZ 350.0f
-#define OSC_GAIN 0.01f
+#define OSC_GAIN 0.1f
 static float phase_debug = 0;
 static float dphase_debug = 0;
 
@@ -36,7 +36,7 @@ static void processing_cb(void *cb_data, uint32_t sample_count, float *tx, const
         demo_app_handle_message(demo_app->rust_app_ptr, command);
     }
 
-    if (true)
+    if (false)
     {
         demo_app_process(demo_app->rust_app_ptr, tx, rx, sample_count);
     }
@@ -58,7 +58,7 @@ static void processing_cb(void *cb_data, uint32_t sample_count, float *tx, const
                 phase_debug -= 4.f;
             }
             float out_sample = OSC_GAIN * value * sign;
-            tx[i] = out_sample;
+            tx[i] = 0.4 * rx[i] + 0.5 * out_sample;
         }
     }
 }

@@ -58,7 +58,7 @@ void wm8904_init()
         //    					 WM8904_VMID_RES_NORMAL | WM8904_VMID_ENA);
         wm8904_write_reg(WM8904_VMID_CONTROL_0, 0b1000011);
         // wm8904_write_register(WM8904_BIAS_CONTROL_0, WM8904_ISEL_HP_BIAS | WM8904_BIAS_ENA);
-        wm8904_write_reg(WM8904_BIAS_CONTROL_0, 0b11001);
+        wm8904_write_reg(WM8904_BIAS_CONTROL_0, 0b01001);
         // wm8904_write_register(WM8904_POWER_MANAGEMENT_0, WM8904_INL_ENA | WM8904_INR_ENA);
         wm8904_write_reg(WM8904_POWER_MANAGEMENT_0, 0b11);
         // wm8904_write_register(WM8904_POWER_MANAGEMENT_2, WM8904_HPL_PGA_ENA | WM8904_HPR_PGA_ENA);
@@ -77,12 +77,12 @@ void wm8904_init()
         // wm8904_write_register(WM8904_FLL_CONTROL_2, WM8904_FLL_OUTDIV(7)| WM8904_FLL_FRATIO(4));
         wm8904_write_reg(WM8904_FLL_CONTROL_2, 8 << 8);
         // wm8904_write_register(WM8904_FLL_CONTROL_3, WM8904_FLL_K(0x8000));
-        wm8904_write_reg(WM8904_FLL_CONTROL_3, 0x0);
+        wm8904_write_reg(WM8904_FLL_CONTROL_3, 0xaaab);
         // wm8904_write_register(WM8904_FLL_CONTROL_4, WM8904_FLL_N(0xBB));
-        wm8904_write_reg(WM8904_FLL_CONTROL_4, 32 << 5); //
+        wm8904_write_reg(WM8904_FLL_CONTROL_4, 42 << 5); //
         // WM8904_FLL_CONTROL_5
         wm8904_write_reg(WM8904_FLL_CONTROL_5, 0b1); // use bitckl as FLL reference
-        wm8904_write_reg(WM8904_FLL_CONTROL_1, 0b001); // ENABLE FLL  FRACN_ENA true
+        wm8904_write_reg(WM8904_FLL_CONTROL_1, 0b101); // ENABLE FLL  FRACN_ENA true
         k_msleep(5);
 
         // wm8904_write_register(WM8904_CLOCK_RATES_0, 0x0000);
@@ -93,8 +93,8 @@ void wm8904_init()
         //           		     WM8904_SYSCLK_SRC | WM8904_CLK_SYS_ENA | WM8904_CLK_DSP_ENA);
         // wm8904_write_reg(WM8904_CLOCK_RATES_2, (1 << 1) | (1 << 14)); // sysclk src = pll, disable sysclock
         // wm8904_write_register(WM8904_AUDIO_INTERFACE_1, WM8904_BCLK_DIR | WM8904_AIF_FMT_I2S);
-        const int word_len = (0b10 << 2); // 24 bit
-        wm8904_write_reg(WM8904_AUDIO_INTERFACE_1, 0b10 | word_len);
+
+        wm8904_write_reg(WM8904_AUDIO_INTERFACE_1, 0b1010); // 24 bit i2s
         // wm8904_write_register(WM8904_AUDIO_INTERFACE_2, WM8904_BCLK_DIV(8));
         // wm8904_write_reg(WM8904_AUDIO_INTERFACE_2, 0b0100); // <- master only?
         // wm8904_write_register(WM8904_AUDIO_INTERFACE_3, WM8904_LRCLK_DIR | WM8904_LRCLK_RATE(0x20)); // <- master only?
@@ -152,9 +152,9 @@ void wm8904_init()
         {
             // unmute, full gain
             wm8904_write_reg(WM8904_ANALOGUE_LEFT_INPUT_0, 0b11111);
-            wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_1, 0b11111);
+            wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_0, 0b11111);
             // set digital volume
-            wm8904_write_reg(WM8904_ADC_DIGITAL_VOLUME_LEFT, 0b11000000);
+            wm8904_write_reg(WM8904_ADC_DIGITAL_VOLUME_LEFT,  0b11000000);
             wm8904_write_reg(WM8904_ADC_DIGITAL_VOLUME_RIGHT, 0b11000000);
             // wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_0, 0b11111);
             wm8904_write_reg(WM8904_ANALOGUE_LEFT_INPUT_1, 0b0010100);
