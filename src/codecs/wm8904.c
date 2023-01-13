@@ -75,7 +75,8 @@ void wm8904_init()
         // wm8904_write_register(WM8904_FLL_CONTROL_1, 0x0000);
         // wm8904_write_register(WM8904_FLL_CONTROL_1, WM8904_FLL_FRACN_ENA | WM8904_FLL_ENA);
         // wm8904_write_register(WM8904_FLL_CONTROL_2, WM8904_FLL_OUTDIV(7)| WM8904_FLL_FRATIO(4));
-        wm8904_write_reg(WM8904_FLL_CONTROL_2, 8 << 8);
+        // NOTE: Bit pattern does NOT correspond to FLL_RATIO number
+        wm8904_write_reg(WM8904_FLL_CONTROL_2, (8 - 1) << 8);
         // wm8904_write_register(WM8904_FLL_CONTROL_3, WM8904_FLL_K(0x8000));
         wm8904_write_reg(WM8904_FLL_CONTROL_3, 0xaaab);
         // wm8904_write_register(WM8904_FLL_CONTROL_4, WM8904_FLL_N(0xBB));
