@@ -97,12 +97,12 @@ impl DemoApp for NlmsDemoApp {
         let mut tone_osc = Oscillator::new(sample_rate);
         tone_osc.set_frequency(OSC_FREQ);
         let mut pitch_lfo = Oscillator::new(sample_rate);
-        pitch_lfo.set_frequency(3.0);
+        pitch_lfo.set_frequency(5.0);
         let tx_prev = vec![0.0; MAX_TX_BUFFER_SIZE];
         let record_buffer = vec![0.0; RECORD_BUFFER_SIZE];
         let out_msg_buffer = Vec::with_capacity(OUT_MSG_BUFFER_SIZE);
         NlmsDemoApp {
-            filter: NlmsFilter::new(20, 0.2, 0.0001),
+            filter: NlmsFilter::new(20, 0.3, 0.001),
             tx_prev,
             record_buffer,
             record_buffer_pos: 0,
@@ -118,7 +118,7 @@ impl DemoApp for NlmsDemoApp {
     fn process(&mut self, rx: &[f32], tx: &mut [f32]) {
         assert!(tx.len() < MAX_TX_BUFFER_SIZE);
         if self.oscillator_enabled {
-            let lfo_depth = 0.6;
+            let lfo_depth = 0.1;
             let lfo = self.pitch_lfo.next_sample();
             self.pitch_lfo.advance(rx.len() - 1);
             let freq = OSC_FREQ * (1.0 + lfo * lfo_depth);
