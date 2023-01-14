@@ -9,7 +9,7 @@ use crate::{AppMessage, DemoApp};
 const DOWNSAMPLING: usize = 4;
 const WINDOW_SIZE: usize = 256 / DOWNSAMPLING;
 const HOP_SIZE: usize = WINDOW_SIZE;
-const DETECTION_THRESHOLD: f32 = 0.01;
+const DETECTION_THRESHOLD: f32 = 0.005;
 const OUT_MSG_BUFFER_SIZE: usize = 16;
 
 pub struct SfnovDemoApp {
