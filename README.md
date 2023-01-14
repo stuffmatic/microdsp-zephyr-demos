@@ -1,8 +1,8 @@
-# microdsp Zephyr demos 
+# microdsp Zephyr demos
 
-This is a collection of demos showing how to do real time, full duplex audio processing on a microcontroller using [Zephyr](https://zephyrproject.org/) ([nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/index.html])), the [microdsp](https://github.com/stuffmatic/microdsp) Rust library and a [WM8758b](datasheets/1811051126_Cirrus-Logic-WM8758CBGEFL-RV_C323840.pdf) audio codec. 
+This is a collection of demos showing how to do real time, full duplex audio processing on a microcontroller using [Zephyr](https://zephyrproject.org/) ([nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/index.html])) and the [microdsp](https://github.com/stuffmatic/microdsp) Rust library.
 
-The demo apps are written in Rust and contained in the [`microdsp_demos`](microdsp_demos) crate. They have been tested with nRF Connect SDK v2.1.2 and the following boards
+The demo apps are written in Rust and contained in the [microdsp_demos](microdsp_demos) crate. They have been tested with nRF Connect SDK v2.1.2 and the following boards
 
 * [nRF52840 DK](https://www.nordicsemi.com/Products/Development-hardware/nRF52840-DK)
 * [nRF5340 DK](https://www.nordicsemi.com/Products/Development-hardware/nRF5340-DK)
@@ -11,7 +11,7 @@ The demo apps are written in Rust and contained in the [`microdsp_demos`](microd
 
 In the videos below, an nRF52840 DK board is used together with breakout boards for
 
-* a WM8940 audio codec 
+* a [WM8940](datasheets/1912111437_Cirrus-Logic-WM8904CGEFL-RV_C323845.pdf) audio codec
 * an analog MEMS microphone
 * a power amplifier driving a small speaker
 
@@ -19,7 +19,7 @@ KiCad projects and JLCPCB fabrication files for these breakout boards are availa
 
 ### Normalized least mean squares filter
 
-This demo shows how to use a normalized least mean squares (NLMS) filter to reduce leakage of sound from the speaker in the signal recorded by the microphone. 
+This demo shows how to use a normalized least mean squares (NLMS) filter to reduce leakage of sound from the speaker in the signal recorded by the microphone.
 
 * __Button 1__ - Toggle speaker output
 * __Button 2__ - Toggle NLMS filter
@@ -32,13 +32,13 @@ This demo shows how to use a normalized least mean squares (NLMS) filter to redu
 
 ### Spectral flux novelty detection demo
 
-This demo shows how to detect transients and "starts of sounds" using spectral changes over time rather than just the microphone signal amplitude. 
+This demo shows how to detect transients and "starts of sounds" using spectral changes over time rather than just signal amplitude changes.
 
 * __LED 1__ - Toggles between on and off for each detected novelty peak
 
 ### MPM pitch detection demo
 
-A (very) simple ukulele tuner demo. Each of the four LEDs turns on when a pitch close to the corresponding ukulele string is detected.
+A (very) simple ukulele tuner. Each of the four LEDs turns on when a pitch close to the corresponding ukulele string is detected.
 
 * __LED 1__ - On when the pitch is close to 392 Hz
 * __LED 2__ - On when the pitch is close to 262 Hz
