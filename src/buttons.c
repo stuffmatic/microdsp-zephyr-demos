@@ -18,11 +18,9 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb,
         if ((pins & BIT(buttons[i].pin)) != 0)
         {
             if (button_callback) {
-                button_callback(i, true);
+                button_callback(i);
             }
-            // printk("Button pin %d pressed.\n", i);
-            // uint8_t command = COMMAND_STOP;
-            // ring_buf_put(&oscillator_state.commands_rx, &command, 1);
+            printk("Button pin %d pressed.\n", i);
         }
     }
 }

@@ -21,8 +21,8 @@ typedef struct
     void *rust_app_ptr;
     uint8_t msg_rx_buffer[APP_MSG_BUFFER_SIZE];
     uint8_t msg_tx_buffer[APP_MSG_BUFFER_SIZE];
-    struct ring_buf msg_rx;
-    struct ring_buf msg_tx;
+    struct ring_buf msg_rx; /* to rust app */
+    struct ring_buf msg_tx; /* from rust app */
 } demo_app_t;
 
 static demo_app_t demo_app;
@@ -48,9 +48,12 @@ static void processing_cb(void *cb_data, uint32_t sample_count, float *tx, const
             }
         }
         // Debug listen to mic
-        for (int i = 0; i < sample_count; i++)
+        if (false)
         {
-            tx[i] = 0.5 * rx[i];
+            for (int i = 0; i < sample_count; i++)
+            {
+                tx[i] = 0.5 * rx[i];
+            }
         }
     }
     else
@@ -83,33 +86,33 @@ static void dropout_cb(void *data)
 
 #define POLL_INTERVAL_MS 10
 
-void button_callback(int btn_idx, int is_down) {
+void button_callback(int btn_idx) {
     uint8_t msg = 0;
 
     switch (btn_idx) {
         case 0:
-            msg = is_down ? Button0Down : Button0Up;
+            msg = Button0Down;
             break;
         case 1:
-            msg = is_down ? Button1Down : Button1Up;
+            msg = Button1Down;
             break;
         case 2:
-            msg = is_down ? Button2Down : Button2Up;
+            msg = Button2Down;
             break;
         case 3:
-            msg = is_down ? Button3Down : Button3Up;
+            msg = Button3Down;
             break;
     }
 
     if (msg) {
-        ring_buf_put(&demo_app.msg_tx, &msg, 1);
+        ring_buf_put(&demo_app.msg_rx, &msg, 1);
     }
 }
 
 void main(void)
 {
     init_leds();
-    // init_buttons(&button_callback);
+    init_buttons(&button_callback);
     printk("before demo_app_create\n");
     demo_app.rust_app_ptr = demo_app_create(audio_cfg.sample_rate);
     printk("after demo_app_create\n");

@@ -6,10 +6,6 @@ typedef enum {
     Button1Down = 2,
     Button2Down = 3,
     Button3Down = 4,
-    Button0Up = 5,
-    Button1Up = 6,
-    Button2Up = 7,
-    Button3Up = 8,
 
     Led0On = 9,
     Led1On = 10,

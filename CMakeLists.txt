@@ -14,5 +14,6 @@ zephyr_add_rust_library(
   CRATE_NAME microdsp-demo # Crate name as specified in Cargo.toml
   CRATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/microdsp_demo # Crate root dir
   CRATE_HEADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/microdsp_demo/include # C header dir
-  EXTRA_CARGO_ARGS --no-default-features --features sfnov_demo # Select demo to build
+  CARGO_PROFILE release
+  EXTRA_CARGO_ARGS --no-default-features --features nlms_demo # Select demo to build
 )

@@ -2,10 +2,10 @@ use crate::{AppMessage, DemoApp};
 use alloc::{vec, vec::Vec};
 use microdsp::nlms::NlmsFilter;
 
-const RECORD_BUFFER_SIZE: usize = 4000; // size in samples
+const RECORD_BUFFER_SIZE: usize = 44000; // size in samples. about a second
 const OUT_MSG_BUFFER_SIZE: usize = 16;
 const MAX_TX_BUFFER_SIZE: usize = 512;
-const OSC_FREQ: f32 = 440.0;
+const OSC_FREQ: f32 = 1000.0;
 
 /// Sine-ish oscillator, approximating sin(pi * x) as
 // 4x + 4x^2 on [-1, 0]
@@ -29,9 +29,10 @@ impl Oscillator {
         self.phase = -1.;
     }
 
+    #[inline]
     fn next_sample(&mut self) -> f32 {
         let a = if self.phase < 0. { 1. } else { -1. };
-        debug_assert!(self.phase >= -1. && self.phase <= 1.);
+        // debug_assert!(self.phase >= -1. && self.phase <= 1.);
 
         let value = self.phase + a * self.phase * self.phase;
 
@@ -42,6 +43,14 @@ impl Oscillator {
         }
         -4. * value
     }
+
+    fn advance(&mut self, num_samples: usize) {
+        self.phase += (num_samples as f32) * self.d_phase;
+        while self.phase > 1.0 {
+            self.phase -= 2.
+        }
+    }
+
 
     fn set_frequency(&mut self, frequency: f32) {
         self.d_phase = 2. * frequency * self.sample_interval;
@@ -88,13 +97,16 @@ impl DemoApp for NlmsDemoApp {
         let mut tone_osc = Oscillator::new(sample_rate);
         tone_osc.set_frequency(OSC_FREQ);
         let mut pitch_lfo = Oscillator::new(sample_rate);
-        pitch_lfo.set_frequency(1.0);
+        pitch_lfo.set_frequency(3.0);
+        let tx_prev = vec![0.0; MAX_TX_BUFFER_SIZE];
+        let record_buffer = vec![0.0; RECORD_BUFFER_SIZE];
+        let out_msg_buffer = Vec::with_capacity(OUT_MSG_BUFFER_SIZE);
         NlmsDemoApp {
-            filter: NlmsFilter::new(10, 0.1, 0.0001),
-            tx_prev: vec![0.0; MAX_TX_BUFFER_SIZE],
-            record_buffer: vec![0.0; RECORD_BUFFER_SIZE],
+            filter: NlmsFilter::new(20, 0.2, 0.0001),
+            tx_prev,
+            record_buffer,
             record_buffer_pos: 0,
-            out_msg_buffer: Vec::with_capacity(OUT_MSG_BUFFER_SIZE),
+            out_msg_buffer,
             filter_is_active: false,
             oscillator_enabled: false,
             recording_state: RecordingState::Idle,
@@ -106,12 +118,13 @@ impl DemoApp for NlmsDemoApp {
     fn process(&mut self, rx: &[f32], tx: &mut [f32]) {
         assert!(tx.len() < MAX_TX_BUFFER_SIZE);
         if self.oscillator_enabled {
+            let lfo_depth = 0.6;
+            let lfo = self.pitch_lfo.next_sample();
+            self.pitch_lfo.advance(rx.len() - 1);
+            let freq = OSC_FREQ * (1.0 + lfo * lfo_depth);
+            self.tone_osc.set_frequency(freq);
+            let osc_gain = 0.02;
             for tx in tx.iter_mut() {
-                let lfo = self.pitch_lfo.next_sample();
-                let lfo_depth = 0.1;
-                let osc_gain = 0.1;
-                let freq = OSC_FREQ * (1.0 + lfo * lfo_depth);
-                self.tone_osc.set_frequency(freq);
                 *tx += osc_gain * self.tone_osc.next_sample();
             }
         }
@@ -138,25 +151,24 @@ impl DemoApp for NlmsDemoApp {
                             self.filter.update(*tx_prev, *rx);
                         self.record_buffer_pos += 1;
                         if self.record_buffer_pos == RECORD_BUFFER_SIZE {
+                            self.stop_recording();
                             break;
                         }
-                    }
-                    if self.record_buffer_pos == RECORD_BUFFER_SIZE {
-                        self.stop_recording()
                     }
                 } else {
                     for rx in rx.iter() {
                         self.record_buffer[self.record_buffer_pos] = *rx;
                         self.record_buffer_pos += 1;
                         if self.record_buffer_pos == RECORD_BUFFER_SIZE {
-                            self.stop_recording()
+                            self.stop_recording();
+                            break;
                         }
                     }
                 }
             }
         }
 
-        // Store the current tx buffer
+        // Store the current tx buffer. Used in next filter update.
         for (tx, tx_prev) in tx.iter().zip(self.tx_prev.iter_mut()) {
             *tx_prev = *tx;
         }
