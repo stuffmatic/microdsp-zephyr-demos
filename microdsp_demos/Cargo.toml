@@ -1,5 +1,5 @@
 [package]
-name = "microdsp-demo"
+name = "microdsp-demos"
 version = "0.1.0"
 edition = "2021"
 

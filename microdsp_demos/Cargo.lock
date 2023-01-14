@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "microdsp-demo"
+name = "microdsp-demos"
 version = "0.1.0"
 dependencies = [
  "microdsp",

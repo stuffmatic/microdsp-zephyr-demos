@@ -9,11 +9,11 @@ target_sources(app PRIVATE src/main.c src/i2s.c src/leds.c src/buttons.c src/cod
 # Import the zephyr_add_rust_library function
 include(zephyr_add_rust_library.cmake)
 
-# Add microdsp-demo crate dependency.
+# Add microdsp-demos crate dependency.
 zephyr_add_rust_library(
-  CRATE_NAME microdsp-demo # Crate name as specified in Cargo.toml
-  CRATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/microdsp_demo # Crate root dir
-  CRATE_HEADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/microdsp_demo/include # C header dir
+  CRATE_NAME microdsp-demos # Crate name as specified in Cargo.toml
+  CRATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/microdsp_demos # Crate root dir
+  CRATE_HEADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/microdsp_demos/include # C header dir
   CARGO_PROFILE release
   EXTRA_CARGO_ARGS --no-default-features --features nlms_demo # Select demo to build
 )
