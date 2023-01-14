@@ -151,15 +151,15 @@ void wm8904_init()
         // mic test, left channel
         if (true)
         {
-            // unmute, full gain
-            wm8904_write_reg(WM8904_ANALOGUE_LEFT_INPUT_0, 0b11111);
-            wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_0, 0b11111);
+            // unmute, +11.4 dB gain
+            wm8904_write_reg(WM8904_ANALOGUE_LEFT_INPUT_0, 0b11000);
+            wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_0, 0b11000);
             // set digital volume
             wm8904_write_reg(WM8904_ADC_DIGITAL_VOLUME_LEFT,  0b11000000);
             wm8904_write_reg(WM8904_ADC_DIGITAL_VOLUME_RIGHT, 0b11000000);
             // wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_0, 0b11111);
-            wm8904_write_reg(WM8904_ANALOGUE_LEFT_INPUT_1, 0b0010100);
-            wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_1, 0b0010100);
+            wm8904_write_reg(WM8904_ANALOGUE_LEFT_INPUT_1, 0b0010000);
+            wm8904_write_reg(WM8904_ANALOGUE_RIGHT_INPUT_1, 0b0010000);
 
             // mic bypass
             // wm8904_write_reg(WM8904_ANALOGUE_OUT12_ZC, 0b1111);

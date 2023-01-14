@@ -10,8 +10,8 @@
 #include "i2s.h"
 #include "leds.h"
 
-#define OSC_FREQ_HZ 350.0f
-#define OSC_GAIN 0.1f
+#define OSC_FREQ_HZ 392.0f
+#define OSC_GAIN 0.5f
 static float phase_debug = 0;
 static float dphase_debug = 0;
 
@@ -36,9 +36,22 @@ static void processing_cb(void *cb_data, uint32_t sample_count, float *tx, const
         demo_app_handle_message(demo_app->rust_app_ptr, command);
     }
 
-    if (false)
+    if (true)
     {
         demo_app_process(demo_app->rust_app_ptr, tx, rx, sample_count);
+        while (true) {
+            app_message_t message = demo_app_next_outgoing_message(demo_app->rust_app_ptr);
+            if (message == 0) {
+                break;
+            } else {
+                ring_buf_put(&demo_app->msg_tx, &message, 1);
+            }
+        }
+        // Debug listen to mic
+        for (int i = 0; i < sample_count; i++)
+        {
+            tx[i] = 0.5 * rx[i];
+        }
     }
     else
     {
@@ -58,7 +71,7 @@ static void processing_cb(void *cb_data, uint32_t sample_count, float *tx, const
                 phase_debug -= 4.f;
             }
             float out_sample = OSC_GAIN * value * sign;
-            tx[i] = 0.4 * rx[i] + 0.5 * out_sample;
+            tx[i] = 0.5 * rx[i] + 0.0 * out_sample;
         }
     }
 }
@@ -95,7 +108,7 @@ void button_callback(int btn_idx, int is_down) {
 
 void main(void)
 {
-    // init_leds();
+    init_leds();
     // init_buttons(&button_callback);
     printk("before demo_app_create\n");
     demo_app.rust_app_ptr = demo_app_create(audio_cfg.sample_rate);
@@ -119,7 +132,7 @@ void main(void)
         // ring_buf_put(&oscillator_state.commands_rx, &command, 1);
         // printk("sent COMMAND_PLAY\n");
         uint8_t command = 0;
-        while (ring_buf_get(&demo_app.msg_rx, &command, 1) > 0)
+        while (ring_buf_get(&demo_app.msg_tx, &command, 1) > 0)
         {
             switch (command)
             {

@@ -56,6 +56,8 @@ struct k_thread processing_thread_data;
 
 uint32_t processing_sem_give_time = 0;
 
+uint32_t debug_counter = 0;
+
 static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
     while (true) {
         if (k_sem_take(&processing_thread_semaphore, K_FOREVER) == 0) {
@@ -103,7 +105,9 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
                 }
                 scratch_buffer_in[i] = val_f;
             }
-            // printk("rx_min %d, rx_max %d, max_sq %f\n", rx_min, rx_max, max_sq);
+            if (debug_counter == 0) {
+                // printk("rx_min %0x, rx_max %0x\n", rx_min, rx_max);
+            }
 
             memset(scratch_buffer_out, 0, AUDIO_BUFFER_N_FRAMES * sizeof(float));
             audio_callbacks->processing_cb(
@@ -114,15 +118,37 @@ static void processing_thread_entry_point(void *p1, void *p2, void *p3) {
             );
 
             // Convert outgoing audio to PCM
+            int32_t tx_min = 0;
+            int32_t tx_max = 0;
             for (int i = 0; i < AUDIO_BUFFER_N_FRAMES; i++) {
-                int32_t out_val = scratch_buffer_out[i] * 8388607.0f;
-                tx[2 * i] = out_val;
-                tx[2 * i + 1] = out_val;
+                float out = scratch_buffer_out[i];
+                if (out < -1.0) {
+                    out = -1.0;
+                } else if (out > 1.0) {
+                    out = 1.0;
+                }
+                int32_t tx_curr = scratch_buffer_out[i] * 8388607.0f;
+
+                if (tx_curr < tx_min || i == 0) {
+                    tx_min = tx_curr;
+                }
+                if (tx_curr > tx_max || i == 0) {
+                    tx_max = tx_curr;
+                }
+                tx[2 * i] = tx_curr;
+                tx[2 * i + 1] = tx_curr;
             }
+            if (debug_counter == 0) {
+                // printk("tx_min %0x, tx_max %0x\n", tx_min, tx_max);
+            }
+            if (tx_max > 0xffffff) {
+                // printk("TX OMG %0x\n", tx_max);
+            }
+            debug_counter = (debug_counter % 10);
 
             nrfx_err_t result = nrfx_i2s_next_buffers_set(buffers_to_process);
             if (result != NRFX_SUCCESS) {
-                printk("nrfx_i2s_next_buffers_set failed with %d\n", result);
+                // printk("nrfx_i2s_next_buffers_set failed with %d\n", result);
                 __ASSERT(result == NRFX_SUCCESS, "nrfx_i2s_next_buffers_set failed with result %d", result);
             }
 

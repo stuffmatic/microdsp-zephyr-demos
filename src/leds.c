@@ -18,11 +18,19 @@ static const struct gpio_dt_spec leds[4] = {
 
 int init_leds()
 {
+    for (uint32_t i = 0; i < 4; i++)
+    {
+        gpio_pin_configure_dt(&leds[i], GPIO_OUTPUT_ACTIVE);
+	    gpio_pin_set_dt(&leds[i], 0);
+    }
 }
 
 int set_led_state(int led_index, int is_on)
-
 {
+    if (led_index >= 0 || led_index < 4) {
+        gpio_pin_set_dt(&leds[led_index], is_on);
+    }
+    // printk("Setting led %d to %d\n", led_index, is_on);
 }
 
 #endif
