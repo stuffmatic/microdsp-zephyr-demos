@@ -20,7 +20,7 @@ microdsp = { path = "../../../rust-audio/microdsp" }
 micromath = "2.0.0"
 
 [features]
-default = ["mpm_demo"]
+default = ["sfnov_demo"]
 nlms_demo = []
 sfnov_demo = []
 mpm_demo = []

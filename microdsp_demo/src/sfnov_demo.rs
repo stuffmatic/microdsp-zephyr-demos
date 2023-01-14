@@ -6,10 +6,10 @@ use microdsp::{
 
 use crate::{AppMessage, DemoApp};
 
-const DOWNSAMPLING: usize = 2;
+const DOWNSAMPLING: usize = 4;
 const WINDOW_SIZE: usize = 256 / DOWNSAMPLING;
 const HOP_SIZE: usize = WINDOW_SIZE;
-const DETECTION_THRESHOLD: f32 = 0.4;
+const DETECTION_THRESHOLD: f32 = 0.01;
 const OUT_MSG_BUFFER_SIZE: usize = 16;
 
 pub struct SfnovDemoApp {
@@ -57,6 +57,6 @@ impl DemoApp for SfnovDemoApp {
     }
     fn handle_message(&mut self, _: crate::AppMessage) {}
     fn next_outgoing_message(&mut self) -> Option<crate::AppMessage> {
-        None
+        self.out_msg_buffer.pop()
     }
 }
