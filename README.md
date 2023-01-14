@@ -1,16 +1,15 @@
 # microdsp Zephyr demos 
 
-This is a [Zephyr](https://zephyrproject.org/) ([nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/index.html])) app showing how to do real time, full duplex audio processing on a microcontroller using the [microdsp](https://github.com/stuffmatic/microdsp) Rust library and an external audio codec. The app has been tested with nRF Connect SDK v2.1.2 and the following boards
+This is a collection of demos showing how to do real time, full duplex audio processing on a microcontroller using [Zephyr](https://zephyrproject.org/) ([nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/index.html])), the [microdsp](https://github.com/stuffmatic/microdsp) Rust library and a [WM8758b](datasheets/1811051126_Cirrus-Logic-WM8758CBGEFL-RV_C323840.pdf) audio codec. 
+
+The demo apps are written in Rust and contained in the [`microdsp_demos`](microdsp_demos) crate. They have been tested with nRF Connect SDK v2.1.2 and the following boards
 
 * [nRF52840 DK](https://www.nordicsemi.com/Products/Development-hardware/nRF52840-DK)
 * [nRF5340 DK](https://www.nordicsemi.com/Products/Development-hardware/nRF5340-DK)
 
-Rudimentary drivers are available for the following audio codecs
+## Demos
 
-* [WM8758b](datasheets/1811051126_Cirrus-Logic-WM8758CBGEFL-RV_C323840.pdf) (not compatible with nRF52840 DK due to clocking limitations)
-* [WM8940](datasheets/1912111437_Cirrus-Logic-WM8904CGEFL-RV_C323845.pdf)
-
-The demos in the videos below run on an nRF52840 DK with breakout boards for
+In the videos below, an nRF52840 DK board is used together with breakout boards for
 
 * a WM8940 audio codec 
 * an analog MEMS microphone
@@ -18,20 +17,38 @@ The demos in the videos below run on an nRF52840 DK with breakout boards for
 
 KiCad projects and JLCPCB fabrication files for these breakout boards are available [here](https://github.com/stuffmatic/kicad-boards).
 
+### Normalized least mean squares filter
 
-## Demos
+This demo shows how to use a normalized least mean squares (NLMS) filter to reduce leakage of sound from the speaker in the signal recorded by the microphone. 
 
-### Normalized lol face
+* __Button 1__ - Toggle speaker output
+* __Button 2__ - Toggle NLMS filter
+* __Button 3__ - Toggle recording
+* __Button 4__ - Toggle playback
+* __LED 1__ - On when speaker output is active
+* __LED 2__ - On when the NLSM filter is active
+* __LED 3__ - On when recording
+* __LED 4__ - On when playing back recording
 
-### Pitch 
+### Spectral flux novelty detection demo
 
-### Pitch 
+This demo shows how to detect transients and "starts of sounds" using spectral changes over time rather than just the microphone signal amplitude. 
 
+* __LED 1__ - Toggles between on and off for each detected novelty peak
+
+### MPM pitch detection demo
+
+A (very) simple ukulele tuner demo. Each of the four LEDs turns on when a pitch close to the corresponding ukulele string is detected.
+
+* __LED 1__ - On when the pitch is close to 392 Hz
+* __LED 2__ - On when the pitch is close to 262 Hz
+* __LED 3__ - On when the pitch is close to 330 Hz
+* __LED 4__ - On when the pitch is close to 440 Hz
 
 ## Selecting which demo to build
 
-The [`microdsp_demos`](microdsp_demos) folder contains a Rust crate with a number of demo apps exposing C APIs used from the Zephyr app. This crate is compiled as part of the Zephyr build using [`zephyr_add_rust_library`](https://github.com/stuffmatic/zephyr_add_rust_library), see [CMakeLists.txt](CMakeLists.txt). To select which demo to build, enable one of the following cargo features
+The [`microdsp_demos`](microdsp_demos) Rust crate is compiled as part of the Zephyr build using [`zephyr_add_rust_library`](https://github.com/stuffmatic/zephyr_add_rust_library), which is called from [CMakeLists.txt](CMakeLists.txt). The `EXTRA_CARGO_ARGS` argument is used to specify which demo app to build by enabling one of the following cargo features:
 
-* `nlms_demo` - Normalized least squares filter demo
-* `sfnov_demo` - Novelty detection demo
+* `nlms_demo` - Normalized least mean squares filter demo
+* `sfnov_demo` -Spectral flux novelty detection demo
 * `mpm_demo` - MPM pitch detection demo
