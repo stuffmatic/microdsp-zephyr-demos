@@ -2,20 +2,16 @@
 
 This is a collection of demos showing how to do real time, full duplex audio processing on a microcontroller using [Zephyr](https://zephyrproject.org/) ([nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/index.html])) and the [microdsp](https://github.com/stuffmatic/microdsp) Rust library.
 
-The demo apps are written in Rust and contained in the [microdsp_demos](microdsp_demos) crate. They have been tested with nRF Connect SDK v2.1.2 and the following boards
+The [microdsp_demos](microdsp_demos) Rust crate contains the demo apps and is added to the Zephyr build using [`zephyr_add_rust_library`](https://github.com/stuffmatic/zephyr_add_rust_library).
+
+The demo apps have been tested with nRF Connect SDK v2.1.2 and the following boards.
 
 * [nRF52840 DK](https://www.nordicsemi.com/Products/Development-hardware/nRF52840-DK)
 * [nRF5340 DK](https://www.nordicsemi.com/Products/Development-hardware/nRF5340-DK)
 
 ## Demos
 
-In the videos below, an nRF52840 DK board is used together with breakout boards for
-
-* a [WM8940](datasheets/1912111437_Cirrus-Logic-WM8904CGEFL-RV_C323845.pdf) audio codec
-* an analog MEMS microphone
-* a power amplifier driving a small speaker
-
-KiCad projects and JLCPCB fabrication files for these breakout boards are available [here](https://github.com/stuffmatic/kicad-boards).
+In the videos below, an nRF52840 DK board is used together with breakout boards for a [WM8940](datasheets/1912111437_Cirrus-Logic-WM8904CGEFL-RV_C323845.pdf) audio codec and an analog MEMS microphone. KiCad projects and JLCPCB fabrication files for these breakout boards are available [here](https://github.com/stuffmatic/kicad-boards).
 
 ### Normalized least mean squares filter
 
