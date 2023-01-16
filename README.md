@@ -17,6 +17,8 @@ In the videos below, an nRF52840 DK board is used together with breakout boards 
 
 This demo shows how to use a normalized least mean squares (NLMS) filter to reduce leakage of sound from the speaker in the signal recorded by the microphone.
 
+https://user-images.githubusercontent.com/2444852/212777121-3747b8f9-168c-45c7-9448-de3e958bd204.mov
+
 * __Button 1__ - Toggle speaker output
 * __Button 2__ - Toggle NLMS filter
 * __Button 3__ - Toggle recording
@@ -26,28 +28,24 @@ This demo shows how to use a normalized least mean squares (NLMS) filter to redu
 * __LED 3__ - On when recording
 * __LED 4__ - On when playing back recording
 
-
-https://user-images.githubusercontent.com/2444852/212777121-3747b8f9-168c-45c7-9448-de3e958bd204.mov
-
-
-### Spectral flux novelty detection demo
-
-This demo shows how to detect transients and "starts of sounds" using spectral changes over time rather than just signal amplitude changes.
-
-* __LED 1__ - Toggles between on and off for each detected novelty peak
-
-https://user-images.githubusercontent.com/2444852/212776266-3e04822a-fc46-4194-af9e-635a33bfee35.mov
-
 ### MPM pitch detection demo
 
 A (very) simple ukulele tuner. Each of the four LEDs turns on when a pitch close to the corresponding ukulele string is detected.
+
+https://user-images.githubusercontent.com/2444852/212776229-e64f0f90-aea1-44fe-b742-57fd5b93aa86.mov
 
 * __LED 1__ - On when the pitch is close to 392 Hz
 * __LED 2__ - On when the pitch is close to 262 Hz
 * __LED 3__ - On when the pitch is close to 330 Hz
 * __LED 4__ - On when the pitch is close to 440 Hz
 
-https://user-images.githubusercontent.com/2444852/212776229-e64f0f90-aea1-44fe-b742-57fd5b93aa86.mov
+### Spectral flux novelty detection demo
+
+This demo shows how to detect transients and "starts of sounds" using spectral changes over time rather than just signal amplitude changes.
+
+https://user-images.githubusercontent.com/2444852/212776266-3e04822a-fc46-4194-af9e-635a33bfee35.mov
+
+* __LED 1__ - Toggles between on and off for each detected novelty peak
 
 ## Selecting which demo to build
 
