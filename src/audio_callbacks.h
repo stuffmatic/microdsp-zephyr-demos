@@ -15,4 +15,4 @@ typedef struct {
   void* cb_data;
 } audio_callbacks_t;
 
-#endif // AUDIO_CALLBACKS_H
+#endif

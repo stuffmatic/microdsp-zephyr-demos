@@ -24,7 +24,6 @@ mod mpm_demo;
 mod nlms_demo;
 mod sfnov_demo;
 
-use alloc::{vec::{self, Vec}, boxed::Box};
 pub use mpm_demo::MpmDemoApp;
 pub use nlms_demo::NlmsDemoApp;
 pub use sfnov_demo::SfnovDemoApp;

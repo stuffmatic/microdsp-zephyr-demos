@@ -1,5 +1,5 @@
 use crate::{AppMessage, DemoApp, DemoAppType};
-use alloc::{boxed::Box, slice, vec, vec::Vec};
+use alloc::{boxed::Box, slice};
 use core::mem::transmute;
 
 #[no_mangle]

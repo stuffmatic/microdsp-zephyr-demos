@@ -20,7 +20,6 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb,
             if (button_callback) {
                 button_callback(i);
             }
-            printk("Button pin %d pressed.\n", i);
         }
     }
 }

@@ -1,8 +1,8 @@
 #ifndef LEDS_H
 #define LEDS_H
 
-#include "leds.h"
 #include <zephyr/drivers/gpio.h>
+#include "leds.h"
 
 #define LED0_NODE DT_ALIAS(led0)
 #define LED1_NODE DT_ALIAS(led1)
@@ -30,7 +30,6 @@ int set_led_state(int led_index, int is_on)
     if (led_index >= 0 || led_index < 4) {
         gpio_pin_set_dt(&leds[led_index], is_on);
     }
-    // printk("Setting led %d to %d\n", led_index, is_on);
 }
 
 #endif

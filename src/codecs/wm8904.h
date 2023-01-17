@@ -3,7 +3,7 @@
 
 #define WM8904_ADDRESS 0b11010
 
-// Registers
+/* Registers */
 #define WM8904_SW_RESET_AND_ID 0x00
 #define WM8904_BIAS_CONTROL_0 0x04
 #define WM8904_VMID_CONTROL_0 0x05

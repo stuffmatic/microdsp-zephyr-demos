@@ -1,3 +1,7 @@
+#
+# Script for computing wm8904 clocking params
+#
+
 ##########################
 # nRF clock config
 ##########################

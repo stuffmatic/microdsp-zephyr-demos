@@ -11,7 +11,7 @@
 #include "codecs/wm8904.h"
 
 #ifdef CONFIG_SOC_SERIES_NRF53X
-static i2s_pin_cfg_t audio_cfg = {
+static i2s_pin_cfg_t i2s_pin_cfg = {
     .sck_pin = 25,
     .lrck_pin = 7,
     .sdin_pin = 6,
@@ -21,7 +21,7 @@ static i2s_pin_cfg_t audio_cfg = {
 #endif
 
 #ifdef CONFIG_SOC_SERIES_NRF52X
-static i2s_pin_cfg_t audio_cfg = {
+static i2s_pin_cfg_t i2s_pin_cfg = {
     .sck_pin = 30,
     .lrck_pin = 29,
     .sdin_pin = 4,
@@ -29,11 +29,6 @@ static i2s_pin_cfg_t audio_cfg = {
     .mck_pin = 31,
 };
 #endif
-
-#define OSC_FREQ_HZ 392.0f
-#define OSC_GAIN 0.5f
-static float phase_debug = 0;
-static float dphase_debug = 0;
 
 #define APP_MSG_BUFFER_SIZE 64
 typedef struct
@@ -50,51 +45,33 @@ static demo_app_t demo_app;
 static void processing_cb(void *cb_data, uint32_t sample_count, float *tx, const float *rx)
 {
     demo_app_t *demo_app = (demo_app_t *)cb_data;
+
+    /* Pass incoming messages to the demo app */
     uint8_t command = 0;
     while (ring_buf_get(&demo_app->msg_rx, &command, 1) > 0)
     {
         demo_app_handle_message(demo_app->rust_app_ptr, command);
     }
 
-    if (true)
-    {
-        demo_app_process(demo_app->rust_app_ptr, tx, rx, sample_count);
-        while (true) {
-            app_message_t message = demo_app_next_outgoing_message(demo_app->rust_app_ptr);
-            if (message == 0) {
-                break;
-            } else {
-                ring_buf_put(&demo_app->msg_tx, &message, 1);
-            }
-        }
-        // Debug listen to mic
-        if (false)
-        {
-            for (int i = 0; i < sample_count; i++)
-            {
-                tx[i] = 0.5 * rx[i];
-            }
-        }
-    }
-    else
+    /* Process audio */
+    demo_app_process(demo_app->rust_app_ptr, tx, rx, sample_count);
+
+    /* Debug listen to mic signal */
+    if (false)
     {
         for (int i = 0; i < sample_count; i++)
         {
-            float x = phase_debug > 1.0f ? phase_debug - 2 : phase_debug;
-            float sign = phase_debug > 1.0f ? -1.0f : 1.0f;
+            tx[i] = 0.5 * rx[i];
+        }
+    }
 
-            float x_sq = x * x;
-            float x_qu = x_sq * x_sq;
-            float value = 0.2146f * x_qu - 1.214601836f * x_sq + 1.0f;
-
-            phase_debug += dphase_debug;
-
-            if (phase_debug > 3.0f)
-            {
-                phase_debug -= 4.f;
-            }
-            float out_sample = OSC_GAIN * value * sign;
-            tx[i] = 0.5 * rx[i] + 0.0 * out_sample;
+    /* Pass outgoing messages to the main loop */
+    while (true) {
+        app_message_t message = demo_app_next_outgoing_message(demo_app->rust_app_ptr);
+        if (message == 0) {
+            break;
+        } else {
+            ring_buf_put(&demo_app->msg_tx, &message, 1);
         }
     }
 }
@@ -103,8 +80,6 @@ static void dropout_cb(void *data)
 {
     printk("dropout!\n");
 }
-
-#define POLL_INTERVAL_MS 10
 
 void button_callback(int btn_idx) {
     uint8_t msg = 0;
@@ -131,32 +106,35 @@ void button_callback(int btn_idx) {
 
 void main(void)
 {
-    // Determined by NRF_I2S_MCK_32MDIV... and NRF_I2S_RATIO_...
+    /* Determined by NRF_I2S_MCK_32MDIV... and NRF_I2S_RATIO_... */
     float sample_rate = 44444.444;
 
+    /* LEDs and buttons  */
     init_leds();
     init_buttons(&button_callback);
-    printk("before demo_app_create\n");
+
+    /* Create demo app */
     demo_app.rust_app_ptr = demo_app_create(sample_rate);
-    printk("after demo_app_create\n");
-    dphase_debug = 4.0f * OSC_FREQ_HZ / sample_rate;
+
+    /* Create ring buffers for sending messages to and from the demo app */
     ring_buf_init(&demo_app.msg_rx, ARRAY_SIZE(demo_app.msg_rx_buffer), demo_app.msg_rx_buffer);
     ring_buf_init(&demo_app.msg_tx, ARRAY_SIZE(demo_app.msg_tx_buffer), demo_app.msg_tx_buffer);
+
+    /* Init audio codec  */
     wm8904_init();
 
+    /* Start I2S  */
     audio_callbacks_t audio_callbacks = {
         .dropout_cb = dropout_cb,
         .processing_cb = processing_cb,
         .cb_data = &demo_app,
     };
+    i2s_start(&i2s_pin_cfg, &audio_callbacks);
 
-    i2s_start(&audio_cfg, &audio_callbacks);
-
+    /* Main loop. Poll and react to messages from the rust app. */
+    int32_t poll_interval_ms = 10;
     while (1)
     {
-        // uint8_t command = COMMAND_PLAY;
-        // ring_buf_put(&oscillator_state.commands_rx, &command, 1);
-        // printk("sent COMMAND_PLAY\n");
         uint8_t command = 0;
         while (ring_buf_get(&demo_app.msg_tx, &command, 1) > 0)
         {
@@ -190,6 +168,6 @@ void main(void)
                 break;
             }
         }
-        k_msleep(POLL_INTERVAL_MS);
+        k_msleep(poll_interval_ms);
     }
 }

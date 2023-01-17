@@ -3,7 +3,6 @@
 
 #include <nrfx_i2s.h>
 #include "audio_callbacks.h"
-#include "audio_cfg.h"
 
 typedef struct {
     uint8_t sck_pin;
@@ -15,4 +14,4 @@ typedef struct {
 
 nrfx_err_t i2s_start(i2s_pin_cfg_t* pin_cfg, audio_callbacks_t* audio_callbacks);
 
-#endif // I2S_H
+#endif
