@@ -185,7 +185,7 @@ void nrfx_i2s_data_handler(nrfx_i2s_buffers_t const *p_released, uint32_t status
     }
 }
 
-nrfx_err_t i2s_start(audio_cfg_t* audio_cfg, audio_callbacks_t* audio_callbacks)
+nrfx_err_t i2s_start(i2s_pin_cfg_t* pin_cfg, audio_callbacks_t* audio_callbacks)
 {
     // Start a dedicated, high priority thread for audio processing.
     k_tid_t processing_thread_tid = k_thread_create(
@@ -201,13 +201,13 @@ nrfx_err_t i2s_start(audio_cfg_t* audio_cfg, audio_callbacks_t* audio_callbacks)
     IRQ_DIRECT_CONNECT(NRFX_IRQ_NUMBER_GET(NRF_I2S0), 0, i2s_isr_handler, 0);
 
     nrfx_i2s_config_t nrfx_i2s_cfg = {
-        .sck_pin = audio_cfg->sck_pin,
-        .lrck_pin = audio_cfg->lrck_pin,
-        .mck_pin = audio_cfg->mck_pin,
-        .sdout_pin = audio_cfg->sdout_pin,
-        .sdin_pin = audio_cfg->sdin_pin,
-        .mck_setup = audio_cfg->mck_setup,
-        .ratio = audio_cfg->ratio,
+        .sck_pin = pin_cfg->sck_pin,
+        .lrck_pin = pin_cfg->lrck_pin,
+        .mck_pin = pin_cfg->mck_pin,
+        .sdout_pin = pin_cfg->sdout_pin,
+        .sdin_pin = pin_cfg->sdin_pin,
+        .mck_setup = NRF_I2S_MCK_32MDIV15,
+        .ratio = NRF_I2S_RATIO_48X,
         .irq_priority = NRFX_I2S_DEFAULT_CONFIG_IRQ_PRIORITY,
         .mode = NRF_I2S_MODE_MASTER,
         .format = NRF_I2S_FORMAT_I2S,

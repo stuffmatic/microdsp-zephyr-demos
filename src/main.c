@@ -5,10 +5,30 @@
 #include <stdlib.h>
 
 #include "audio_callbacks.h"
-#include "audio_cfg.h"
 #include "buttons.h"
 #include "i2s.h"
 #include "leds.h"
+#include "codecs/wm8904.h"
+
+#ifdef CONFIG_SOC_SERIES_NRF53X
+static i2s_pin_cfg_t audio_cfg = {
+    .sck_pin = 25,
+    .lrck_pin = 7,
+    .sdin_pin = 6,
+    .sdout_pin = 5,
+    .mck_pin = 26
+};
+#endif
+
+#ifdef CONFIG_SOC_SERIES_NRF52X
+static i2s_pin_cfg_t audio_cfg = {
+    .sck_pin = 30,
+    .lrck_pin = 29,
+    .sdin_pin = 4,
+    .sdout_pin = 28,
+    .mck_pin = 31,
+};
+#endif
 
 #define OSC_FREQ_HZ 392.0f
 #define OSC_GAIN 0.5f
@@ -111,15 +131,18 @@ void button_callback(int btn_idx) {
 
 void main(void)
 {
+    // Determined by NRF_I2S_MCK_32MDIV... and NRF_I2S_RATIO_...
+    float sample_rate = 44444.444;
+
     init_leds();
     init_buttons(&button_callback);
     printk("before demo_app_create\n");
-    demo_app.rust_app_ptr = demo_app_create(audio_cfg.sample_rate);
+    demo_app.rust_app_ptr = demo_app_create(sample_rate);
     printk("after demo_app_create\n");
-    dphase_debug = 4.0f * OSC_FREQ_HZ / audio_cfg.sample_rate;
+    dphase_debug = 4.0f * OSC_FREQ_HZ / sample_rate;
     ring_buf_init(&demo_app.msg_rx, ARRAY_SIZE(demo_app.msg_rx_buffer), demo_app.msg_rx_buffer);
     ring_buf_init(&demo_app.msg_tx, ARRAY_SIZE(demo_app.msg_tx_buffer), demo_app.msg_tx_buffer);
-    audio_cfg.init_codec();
+    wm8904_init();
 
     audio_callbacks_t audio_callbacks = {
         .dropout_cb = dropout_cb,
