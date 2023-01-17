@@ -17,7 +17,7 @@ In the videos below, an nRF52840 DK board is used together with breakout boards 
 
 This demo shows how to use a normalized least mean squares (NLMS) filter to reduce leakage of sound from the speaker in the signal recorded by the microphone.
 
-https://user-images.githubusercontent.com/2444852/212777121-3747b8f9-168c-45c7-9448-de3e958bd204.mov
+https://user-images.githubusercontent.com/2444852/212998568-db2bd389-72e6-4a60-9e16-2c0528aea2fb.mov
 
 * __Button 1__ - Toggle speaker output
 * __Button 2__ - Toggle NLMS filter
