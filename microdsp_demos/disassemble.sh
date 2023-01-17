@@ -1,7 +1,7 @@
 PROFILE=$1
 # TARGET=thumbv7em-none-eabihf
 TARGET=thumbv8m.main-none-eabihf
-CRATE=microdsp_demo
+CRATE=microdsp_demos
 
 LIB_NAME=lib${CRATE/-/_}.a
 OUTPUT_FILE=$PROFILE.$TARGET.txt

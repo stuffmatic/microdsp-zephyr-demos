@@ -1,7 +1,7 @@
 #include <zephyr/zephyr.h>
 #include <zephyr/drivers/gpio.h>
 #include <sys/ring_buffer.h>
-#include <microdsp_demo/microdsp_demo.h>
+#include <microdsp_demos/microdsp_demos.h>
 #include <stdlib.h>
 
 #include "audio_callbacks.h"
