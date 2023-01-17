@@ -9,10 +9,10 @@ const FREQUENCIES_TO_DETECT: [f32; FREQUENCY_COUNT] = [
     // Ukulele strings
     440.0, 330.0, 262.0, 392.0
 ];
-const MAX_FREQ_ERROR: f32 = 6.0;
+const MAX_FREQ_ERROR: f32 = 12.0;
 const OUT_MSG_BUFFER_SIZE: usize = 32;
-const DOWNSAMPLING: usize = 2;
-const WINDOW_SIZE: usize = 512 / DOWNSAMPLING;
+const DOWNSAMPLING: usize = 4;
+const WINDOW_SIZE: usize = 1024 / DOWNSAMPLING;
 const LAG_COUNT: usize = WINDOW_SIZE / 2;
 const HOP_SIZE: usize = WINDOW_SIZE;
 
@@ -46,7 +46,7 @@ impl DemoApp for MpmDemoApp {
 
         let out_msg_buffer = &mut self.out_msg_buffer;
         self.detector.process(rx, |result| {
-            let result_is_tone = result.is_tone_with_options(0.7, 0.5, 0.05);
+            let result_is_tone = result.is_tone_with_options(0.5, 0.5, 0.05);
             for (i, f) in FREQUENCIES_TO_DETECT.iter().enumerate() {
                 let freq_error = F32Ext::abs(result.frequency - *f);
                 let tone_decected = result_is_tone && freq_error < MAX_FREQ_ERROR;
