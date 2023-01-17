@@ -16,7 +16,7 @@ crate-type = ["staticlib"]
 opt-level = 3
 
 [dependencies]
-microdsp = { path = "../../../rust-audio/microdsp" }
+microdsp = "0.1"
 micromath = "2.0.0"
 
 [features]
