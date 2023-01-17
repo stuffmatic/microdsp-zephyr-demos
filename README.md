@@ -1,6 +1,6 @@
 # microdsp Zephyr demos
 
-This is a collection of demos showing how to do real time, full duplex audio processing on a microcontroller using [Zephyr](https://zephyrproject.org/) ([nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/index.html])) and the [microdsp](https://github.com/stuffmatic/microdsp) Rust library.
+This is a collection of demos showing how to do real time, full duplex audio processing on a microcontroller using [Zephyr](https://zephyrproject.org/) ([nRF Connect SDK](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/index.html])) and the [microdsp](https://github.com/stuffmatic/microdsp) Rust library (scroll down for videos).
 
 The [microdsp_demos](microdsp_demos) Rust crate contains the demo apps and is added to the Zephyr build using [`zephyr_add_rust_library`](https://github.com/stuffmatic/zephyr_add_rust_library).
 
